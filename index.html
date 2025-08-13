@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reserva SC</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- Lottie -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+  <style>
+    .glass{ backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); background:rgba(255,255,255,.75); }
+    .fade{ animation:fade .4s ease both; } @keyframes fade{ from{opacity:0;transform:translateY(6px)} }
+    .btn{ border-radius:.75rem; padding:.75rem 1rem; font-weight:500; transition:all .2s; }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    .btn-primary{ background:#000; color:#fff; } .btn-primary:hover{ background:#18181b; }
+    .btn-outline{ border:1px solid #d4d4d8; } .btn-outline:hover{ background:#f4f4f5; }
+    .muted{ color:#71717a; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+
+<div class="glass w-full max-w-md p-7 rounded-2xl shadow-xl fade">
+  <div class="mb-6 text-center">
+    <lottie-player src="https://assets7.lottiefiles.com/packages/lf20_puciaact.json"
+                   background="transparent" speed="1"
+                   style="width:40px;height:40px" loop autoplay class="mx-auto"></lottie-player>
+    <h1 class="text-xl font-semibold">Arreglos de Predicación con Superintendente de Circuito</h1>
+    <p class="text-sm text-gray-500 mt-1">Malintzi LSM del 7 al 12 de octubre de 2025</p>
+  </div>
+
+    <!-- FORM -->
+    <form id="reservaForm" class="space-y-4">
+      <div>
+        <label for="name" class="block text-sm mb-1">Nombre completo <span class="text-red-500">*</span></label>
+        <input id="name" type="text" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required placeholder="Escribe tu nombre" />
+      </div>
+
+      <div>
+        <label for="date" class="block text-sm mb-1">¿Qué día? <span class="text-red-500">*</span></label>
+        <input id="date" type="date" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required aria-describedby="dateHelp" />
+        <p id="dateHelp" class="text-xs muted mt-1">La salida es a las 9:00 a.m.</p>
+      </div>
+
+      <div>
+        <label for="person" class="block text-sm mb-1">Reservar con <span class="text-red-500">*</span></label>
+        <select id="person" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required>
+          <option value="">Seleccione</option>
+          <option value="SC" id="optSC">Superintendente de Circuito</option>
+          <option value="Esposa" id="optEsposa">Esposa del SC</option>
+        </select>
+        <p class="text-xs muted mt-1">Las opciones se deshabilitan si ya están ocupadas para ese día.</p>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary w-full">Reservar cupo</button>
+      <p id="formMsg" class="text-sm mt-1"></p>
+    </form>
+
+    <!-- SUCCESS -->
+    <section id="successBox" class="hidden text-center space-y-3">
+      <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="width:150px;height:150px" autoplay></lottie-player>
+      <h2 class="text-lg font-semibold">¡Gracias, <span id="thanksName"></span>!</h2>
+      <p class="text-sm text-zinc-600">Tu día de predicación ha sido <b>registrado y reservado</b> para <b><span id="thanksDate"></span></b> a las 9:00 a.m. con <b><span id="thanksPerson"></span></b>.</p>
+      <a href="#" id="newBtn" class="btn btn-outline inline-block mt-1">Hacer otra reserva</a>
+    </section>
+
+    <!-- DUPLICATE/ERROR -->
+    <section id="errorBox" class="hidden text-center space-y-3">
+      <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_qp1q7mct.json" background="transparent" speed="1" style="width:150px;height:150px" autoplay></lottie-player>
+      <h2 class="text-lg font-semibold">Cupo ocupado</h2>
+      <p class="text-sm text-zinc-600">Ese <b>día + persona</b> ya fue tomado. Elige otra combinación.</p>
+      <a href="#" id="retryBtn" class="btn btn-outline inline-block mt-1">Volver al formulario</a>
+    </section>
+  </div>
+
+  <script>
+    // CONFIG
+    const SUPABASE_URL = "https://sefqzqeztnazpbsolbos.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlZnF6cWV6dG5henBic29sYm9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNDM2MjEsImV4cCI6MjA3MDYxOTYyMX0.9aSakQ3GL3I_H1voXTCN2WdaCMBRDMu5kmLJm3bVa6o";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // UI refs
+    const $ = (id) => document.getElementById(id);
+    const form = $("reservaForm"), formMsg = $("formMsg"), submitBtn = $("submitBtn");
+    const nameInput = $("name"), dateInput = $("date"), personSelect = $("person");
+    const optSC = $("optSC"), optEsposa = $("optEsposa");
+    const successBox = $("successBox"), errorBox = $("errorBox");
+    const thanksName = $("thanksName"), thanksDate = $("thanksDate"), thanksPerson = $("thanksPerson");
+    const retryBtn = $("retryBtn"), newBtn = $("newBtn");
+
+    // Fecha mínima = hoy (local)
+    const t = new Date(); const yyyy = t.getFullYear(), mm = String(t.getMonth()+1).padStart(2,'0'), dd = String(t.getDate()).padStart(2,'0');
+    dateInput.min = `${yyyy}-${mm}-${dd}`;
+
+    // Checar disponibilidad para la fecha seleccionada
+    async function checkAvailability() {
+      const d = dateInput.value; if (!d) return;
+      // reset
+      [optSC, optEsposa].forEach(o => { o.disabled = false; o.textContent = o.value === 'SC' ? 'Superintendente de Circuito' : 'Esposa del SC'; });
+
+      const { data, error } = await db.rpc('taken_persons', { p_date: d });
+      if (error) { formMsg.textContent = "No se pudo verificar disponibilidad."; formMsg.className = "text-sm text-red-600"; return; }
+
+      const taken = new Set((data||[]).map(r => r.person));
+      if (taken.has("SC")) { optSC.disabled = true; optSC.textContent = "Superintendente de Circuito — Ocupado"; }
+      if (taken.has("Esposa")) { optEsposa.disabled = true; optEsposa.textContent = "Esposa del SC — Ocupado"; }
+    }
+    dateInput.addEventListener("change", checkAvailability);
+
+    // Enviar reserva
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      formMsg.textContent = ""; submitBtn.disabled = true; submitBtn.textContent = "Reservando...";
+
+      const payload = { name: nameInput.value.trim(), person: personSelect.value, date: dateInput.value };
+      const { error } = await db.from("reservas").insert(payload);
+
+      if (error) {
+        // Duplicado por índice único (día+persona)
+        if (error.code === "23505") {
+          form.classList.add("hidden"); errorBox.classList.remove("hidden");
+          await checkAvailability();
+        } else {
+          formMsg.textContent = "Error al guardar. Intenta de nuevo."; formMsg.className = "text-sm text-red-600";
+          console.error(error);
+        }
+      } else {
+        // Éxito
+        const nombreCorto = payload.name.split(" ")[0] || payload.name;
+        thanksName.textContent = nombreCorto;
+        const [y,m,d] = payload.date.split("-");
+        thanksDate.textContent = `${d}/${m}/${y}`;
+        thanksPerson.textContent = payload.person === "SC" ? "el Superintendente de Circuito" : "la Esposa del SC";
+        form.classList.add("hidden"); successBox.classList.remove("hidden");
+      }
+
+      submitBtn.disabled = false; submitBtn.textContent = "Reservar cupo";
+    });
+
+    retryBtn.addEventListener("click", (e) => {
+      e.preventDefault(); errorBox.classList.add("hidden"); form.classList.remove("hidden");
+    });
+
+    newBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      successBox.classList.add("hidden"); form.classList.remove("hidden");
+      form.reset(); checkAvailability();
+    });
+
+    // Si el navegador autocompleta fecha al cargar
+    checkAvailability();
+  </script>
+</body>
+</html>
