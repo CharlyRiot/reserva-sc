@@ -24,7 +24,6 @@
     .btn-outline{ border:1px solid #d4d4d8; } .btn-outline:hover{ background:#f4f4f5; }
     .muted{ color:#71717a; }
   </style>
-
 </head>
 <body class="min-h-screen bg-gray-100 flex items-center justify-center px-4">
 
@@ -40,7 +39,7 @@
   <!-- FORM -->
   <form id="reservaForm" class="space-y-4">
     <div>
-      <label for="name" class="block text-sm mb-1">Nombre completo <span class="text-red-500">*</span></label>
+      <label for="name" class="block text-sm mb-1">Nombre completo (Evita duplicados) <span class="text-red-500">*</span></label>
       <input id="name" type="text" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required placeholder="Escribe tu nombre" />
     </div>
 
@@ -55,8 +54,8 @@
       <label for="slot" class="block text-sm mb-1">Turno (a.m./p.m.) <span class="text-red-500">*</span></label>
       <select id="slot" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required>
         <option value="">Seleccione</option>
-      <option value="AM" id="optAM">Mañana (9:00 a.m.)</option>
-      <option value="PM" id="optPM">Tarde (4:30 p.m.)</option>
+        <option value="AM" id="optAM">Mañana (9:00 a.m.)</option>
+        <option value="PM" id="optPM">Tarde (4:30 p.m.)</option>
       </select>
       <p id="slotHelp" class="text-xs muted mt-1">La tarde solo está disponible Mié y Vie. 4:30p.m - 6:00 p.m.</p>
     </div>
@@ -77,7 +76,7 @@
 
   <!-- SUCCESS -->
   <section id="successBox" class="success hidden">
-    <div class="success-wrap">
+    <div class="success-wrap text-center">
       <lottie-player id="doneAnim" src="assets/Done.json" background="transparent" speed="1" class="success-check" autoplay loop></lottie-player>
 
       <h2 class="success-title">¡Gracias <span id="thanksName"></span>!</h2>
@@ -110,7 +109,7 @@
   // Helper
   const $ = (id) => document.getElementById(id);
 
-  // UI refs (después de definir $)
+  // UI refs
   const form = $("reservaForm"), formMsg = $("formMsg"), submitBtn = $("submitBtn");
   const nameInput = $("name"), dateInput = $("date"), personSelect = $("person");
   const slotSelect = $("slot"), optAM = $("optAM"), optPM = $("optPM");
@@ -121,109 +120,154 @@
   const thanksName = $("thanksName"), thanksDate = $("thanksDate"), thanksPerson = $("thanksPerson"), thanksTime = $("thanksTime");
   const retryBtn = $("retryBtn"), newBtn = $("newBtn");
 
-  //Función para habilitar/inhabilitar AM/PM según el día
-  function updateAllowedSlots() {
-  const d = dateInput.value;
-  if (!d) return;
-
-  const dow = new Date(d + 'T00:00').getDay(); // 0=Dom ... 6=Sáb
-  const amOk = AM_ALLOWED.has(dow);
-  const pmOk = PM_ALLOWED.has(dow);
-
-  optAM.disabled = !amOk;
-  optPM.disabled = !pmOk;
-  optAM.textContent = amOk ? 'Mañana (9:00 a.m.)' : 'Mañana — No disponible';
-  optPM.textContent = pmOk ? 'Tarde (4:30 p.m.)' : 'Tarde — No disponible';
-
-  // Si el turno elegido ya no es válido, límpialo
-  if ((slotSelect.value === 'AM' && !amOk) || (slotSelect.value === 'PM' && !pmOk)) {
-    slotSelect.value = '';
+  // Mensajería corta
+  function setFormMsg(text, kind='') {
+    formMsg.textContent = text || '';
+    formMsg.className = 'text-sm mt-1 ' + (kind === 'error' ? 'text-red-600' : kind === 'warn' ? 'text-amber-600' : 'text-zinc-600');
   }
-}
+
+  // Habilitar/inhabilitar AM/PM según el día
+  function updateAllowedSlots() {
+    const d = dateInput.value;
+    if (!d) return;
+
+    const dow = new Date(d + 'T00:00').getDay(); // 0=Dom ... 6=Sáb
+    const amOk = AM_ALLOWED.has(dow);
+    const pmOk = PM_ALLOWED.has(dow);
+
+    optAM.disabled = !amOk;
+    optPM.disabled = !pmOk;
+    optAM.textContent = amOk ? 'Mañana (9:00 a.m.)' : 'Mañana — No disponible';
+    optPM.textContent = pmOk ? 'Tarde (4:30 p.m.)' : 'Tarde — No disponible';
+
+    // Si el turno elegido ya no es válido, límpialo
+    if ((slotSelect.value === 'AM' && !amOk) || (slotSelect.value === 'PM' && !pmOk)) {
+      slotSelect.value = '';
+    }
+  }
+
+  // Control del botón según estado
+  function updateSubmitState() {
+    const hasDate = !!dateInput.value;
+    const hasSlot = !!slotSelect.value;
+    const personVal = personSelect.value;
+    const personOption = personVal ? document.querySelector(`#person option[value="${personVal}"]`) : null;
+    const personValid = !!personVal && personOption && !personOption.disabled;
+
+    // Si ambas personas están ocupadas, avisa
+    const bothDisabled = optSC.disabled && optEsposa.disabled;
+    if (bothDisabled) {
+      personSelect.value = '';
+      setFormMsg('No hay cupos para esa fecha y turno.', 'warn');
+    } else if (personVal && personOption && personOption.disabled) {
+      personSelect.value = '';
+      setFormMsg('Esa persona se ocupó para ese día/turno. Elige otra.', 'warn');
+    } else {
+      // No ensuciar con mensajes si todo va bien
+      if (formMsg.textContent.includes('cupo') || formMsg.textContent.includes('ocupó')) {
+        setFormMsg('');
+      }
+    }
+
+    submitBtn.disabled = !(hasDate && hasSlot && personValid && !bothDisabled);
+  }
 
   // Fecha mínima = hoy (local)
   const t = new Date(); const yyyy = t.getFullYear(), mm = String(t.getMonth()+1).padStart(2,'0'), dd = String(t.getDate()).padStart(2,'0');
   dateInput.min = `${yyyy}-${mm}-${dd}`;
 
+  // Disponibilidad por día + turno
+  async function checkAvailability() {
+    const d = dateInput.value;
+    if (!d) return;
+
+    // Ajustar qué turnos se permiten
+    updateAllowedSlots();
+
+    // Reinicia estado de personas
+    [optSC, optEsposa].forEach(o => {
+      o.disabled = false;
+      o.textContent = o.value === 'SC' ? 'Superintendente de Circuito' : 'Esposa del SC';
+    });
+
+    // Si no hay turno aún, solo actualizar botón
+    if (!slotSelect.value) { updateSubmitState(); return; }
+
+    const { data, error } = await db.rpc('taken_persons_by_slot', {
+      p_date: d,
+      p_slot: slotSelect.value
+    });
+
+    if (error) {
+      setFormMsg("No se pudo verificar disponibilidad.", 'error');
+      updateSubmitState();
+      return;
+    }
+
+    const taken = new Set((data || []).map(r => r.person));
+    if (taken.has("SC")) {
+      optSC.disabled = true;
+      optSC.textContent = "Superintendente de Circuito — Ocupado";
+    }
+    if (taken.has("Esposa")) {
+      optEsposa.disabled = true;
+      optEsposa.textContent = "Esposa del SC — Ocupado";
+    }
+
+    // Si la persona seleccionada quedó inválida, se limpia en updateSubmitState
+    updateSubmitState();
+  }
+
   // Listeners
   dateInput.addEventListener("change", () => { updateAllowedSlots(); checkAvailability(); });
-  slotSelect.addEventListener("change", checkAvailability);
-
-  // Disponibilidad por día + turno
-async function checkAvailability() {
-  const d = dateInput.value;
-  if (!d) return;
-
-  // Primero, ajustar qué turnos se permiten
-  updateAllowedSlots();
-
-  // Reinicia estado de personas
-  [optSC, optEsposa].forEach(o => {
-    o.disabled = false;
-    o.textContent = o.value === 'SC' ? 'Superintendente de Circuito' : 'Esposa del SC';
-  });
-
-  // Si el usuario aún no eligió un turno válido, no consultes
-  if (!slotSelect.value) return;
-
-  const { data, error } = await db.rpc('taken_persons_by_slot', {
-    p_date: d,
-    p_slot: slotSelect.value
-  });
-
-  if (error) {
-    formMsg.textContent = "No se pudo verificar disponibilidad.";
-    formMsg.className = "text-sm text-red-600";
-    return;
-  }
-
-  const taken = new Set((data || []).map(r => r.person));
-  if (taken.has("SC")) {
-    optSC.disabled = true;
-    optSC.textContent = "Superintendente de Circuito — Ocupado";
-  }
-  if (taken.has("Esposa")) {
-    optEsposa.disabled = true;
-    optEsposa.textContent = "Esposa del SC — Ocupado";
-  }
-}
-
+  slotSelect.addEventListener("change", () => { checkAvailability(); });
+  personSelect.addEventListener("change", updateSubmitState);
 
   // Enviar reserva
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    formMsg.textContent = ""; submitBtn.disabled = true; submitBtn.textContent = "Reservando...";
+    setFormMsg('');
+    submitBtn.disabled = true; submitBtn.textContent = "Reservando...";
+
+    // Validación rápida
+    if (!dateInput.value || !slotSelect.value || !personSelect.value) {
+      setFormMsg('Completa fecha, turno y persona.', 'error');
+      submitBtn.disabled = false; submitBtn.textContent = "Reservar cupo";
+      return;
+    }
 
     const payload = {
-  name: nameInput.value.trim(),
-  person: personSelect.value,
-  date: dateInput.value,
-  slot: slotSelect.value || 'AM'
-};
+      name: nameInput.value.trim(),
+      person: personSelect.value,
+      date: dateInput.value,
+      slot: slotSelect.value || 'AM'
+    };
 
     const { error } = await db.from("reservas").insert(payload);
 
     if (error) {
       // Duplicado por índice único (día+persona+turno)
       if (error.code === "23505") {
-        form.classList.add("hidden"); errorBox.classList.remove("hidden");
+        form.classList.add("hidden");
+        errorBox.classList.remove("hidden");
+        // Limpia selección y refresca disponibilidad para evitar reintentos inválidos
+        personSelect.value = '';
         await checkAvailability();
       } else {
-        formMsg.textContent = "Error al guardar. Intenta de nuevo."; formMsg.className = "text-sm text-red-600";
+        setFormMsg("Error al guardar. Intenta de nuevo.", 'error');
         console.error(error);
       }
     } else {
       // Éxito
-   const nombreCorto = payload.name.split(" ")[0] || payload.name;
-thanksName.textContent = nombreCorto;
-const [y,m,d] = payload.date.split("-");
-thanksDate.textContent = `${d}/${m}/${y}`;
-thanksPerson.textContent = payload.person === "SC" ? "el Superintendente de Circuito" : "la Esposa del SC";
-thanksTime.textContent = payload.slot === 'PM' ? '4:30 p.m.' : '9:00 a.m.';
+      const nombreCorto = payload.name.split(" ")[0] || payload.name;
+      thanksName.textContent = nombreCorto;
+      const [y,m,d] = payload.date.split("-");
+      thanksDate.textContent = `${d}/${m}/${y}`;
+      thanksPerson.textContent = payload.person === "SC" ? "el Superintendente de Circuito" : "la Esposa del SC";
+      thanksTime.textContent = payload.slot === 'PM' ? '4:30 p.m.' : '9:00 a.m.';
 
-form.classList.add("hidden");
-successBox.classList.remove("hidden");
-
+      form.classList.add("hidden");
+      successBox.classList.remove("hidden");
 
       // Reinicia animación Lottie por si estaba pausada
       const doneAnim = document.getElementById('doneAnim');
@@ -234,13 +278,21 @@ successBox.classList.remove("hidden");
   });
 
   retryBtn.addEventListener("click", (e) => {
-    e.preventDefault(); errorBox.classList.add("hidden"); form.classList.remove("hidden");
+    e.preventDefault();
+    errorBox.classList.add("hidden");
+    form.classList.remove("hidden");
+    // Limpia selección de persona y actualiza estado
+    personSelect.value = '';
+    checkAvailability();
   });
 
   newBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    successBox.classList.add("hidden"); form.classList.remove("hidden");
-    form.reset(); checkAvailability();
+    successBox.classList.add("hidden");
+    form.classList.remove("hidden");
+    form.reset();
+    setFormMsg('');
+    checkAvailability();
     const doneAnim = document.getElementById('doneAnim'); if (doneAnim && doneAnim.stop) doneAnim.stop();
   });
 
