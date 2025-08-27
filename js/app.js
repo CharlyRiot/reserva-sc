@@ -53,9 +53,9 @@ function setFormMsg(text, kind = "") {
 //  (nota: con js/sw.js el scope es /js/*)
 // ==========================
 if ("serviceWorker" in navigator) {
-  // Si mueves sw.js a la raíz, usa navigator.serviceWorker.register('/sw.js')
-  navigator.serviceWorker.register("js/sw.js").catch(() => {});
+  navigator.serviceWorker.register("/sw.js"); // <-- raíz
 }
+
 
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {

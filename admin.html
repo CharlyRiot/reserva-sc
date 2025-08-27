@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin · Reserva SC</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body class="min-h-screen bg-gray-100">
+  <div class="max-w-3xl mx-auto p-4">
+    <h1 class="text-2xl font-semibold mb-2">Panel Admin · Reserva SC</h1>
+    <p class="text-sm text-zinc-600 mb-6">Abre, programa, cierra y ajusta rango/días sin usar SQL.</p>
+
+    <!-- LOGIN -->
+    <section id="loginBox" class="glass p-4 rounded-xl mb-4">
+      <h2 class="font-medium mb-2">Acceso</h2>
+      <p class="text-sm text-zinc-600 mb-3">Ingresa tu correo y te llegará un enlace para entrar.</p>
+      <div class="flex gap-2 items-end">
+        <div class="flex-1">
+          <label for="email" class="text-sm">Correo</label>
+          <input id="email" type="email" class="w-full border rounded-lg p-2" placeholder="tu-correo@dominio.com"/>
+        </div>
+        <button id="sendLinkBtn" class="btn btn-primary">Enviar enlace</button>
+      </div>
+      <p id="loginMsg" class="text-sm mt-2 text-zinc-600"></p>
+    </section>
+
+    <!-- APP -->
+    <section id="appBox" class="glass p-4 rounded-xl hidden">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-medium">Control de la visita</h2>
+        <div class="flex gap-2">
+          <button id="logoutBtn" class="btn btn-outline">Salir</button>
+        </div>
+      </div>
+
+      <!-- Estado -->
+      <div class="mb-4">
+        <div class="text-sm">
+          <span class="font-medium">Estado:</span>
+          <span id="stateBadge" class="px-2 py-0.5 rounded-lg text-white text-xs"></span>
+        </div>
+        <p id="stateDesc" class="text-sm text-zinc-600 mt-1"></p>
+      </div>
+
+      <!-- Form ventana -->
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm">Título</label>
+          <input id="title" class="w-full border rounded-lg p-2" placeholder="Visita SC ..."/>
+        </div>
+        <div>
+          <label class="text-sm">Abrir (open_at)</label>
+          <input id="openAt" type="datetime-local" class="w-full border rounded-lg p-2"/>
+        </div>
+        <div>
+          <label class="text-sm">Inicio (start_date)</label>
+          <input id="startDate" type="date" class="w-full border rounded-lg p-2"/>
+        </div>
+        <div>
+          <label class="text-sm">Fin (end_date)</label>
+          <input id="endDate" type="date" class="w-full border rounded-lg p-2"/>
+        </div>
+      </div>
+
+      <!-- Días -->
+      <div class="mt-4 grid sm:grid-cols-2 gap-4">
+        <div>
+          <div class="font-medium text-sm mb-1">AM permitido</div>
+          <div id="amDays" class="grid grid-cols-7 gap-2 text-xs"></div>
+        </div>
+        <div>
+          <div class="font-medium text-sm mb-1">PM permitido</div>
+          <div id="pmDays" class="grid grid-cols-7 gap-2 text-xs"></div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="mt-5 flex flex-wrap gap-2">
+        <button id="openNowBtn" class="btn btn-primary">Abrir ahora</button>
+        <button id="scheduleBtn" class="btn btn-outline">Programar apertura</button>
+        <button id="closeBtn" class="btn btn-outline">Cerrar</button>
+        <button id="saveWindowBtn" class="btn btn-outline">Guardar rango/días</button>
+        <button id="newVisitBtn" class="btn btn-outline">Crear nueva visita</button>
+      </div>
+
+      <p id="appMsg" class="text-sm mt-3 text-zinc-600"></p>
+
+      <!-- Log visitas -->
+      <div class="mt-6">
+        <h3 class="font-medium mb-2">Últimas visitas</h3>
+        <table class="w-full text-sm border">
+          <thead class="bg-zinc-100">
+            <tr>
+              <th class="p-2 border">ID</th>
+              <th class="p-2 border">Título</th>
+              <th class="p-2 border">Inicio</th>
+              <th class="p-2 border">Fin</th>
+              <th class="p-2 border">is_open</th>
+              <th class="p-2 border">open_at</th>
+              <th class="p-2 border">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="visitsTbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
