@@ -17,6 +17,7 @@ const startDateInput = $("startDate");
 const endDateInput = $("endDate");
 const amDaysBox = $("amDays");
 const pmDaysBox = $("pmDays");
+
 const openNowBtn = $("openNowBtn");
 const scheduleBtn = $("scheduleBtn");
 const closeBtn = $("closeBtn");
@@ -51,8 +52,10 @@ buildDays(amDaysBox, "am");
 buildDays(pmDaysBox, "pm");
 
 function getCheckedSet(group) {
-  return new Set([...document.querySelectorAll(`input[type="checkbox"][data-group="${group}"]:checked`)]
-    .map(cb => Number(cb.value)));
+  return new Set(
+    [...document.querySelectorAll(`input[type="checkbox"][data-group="${group}"]:checked`)]
+      .map(cb => Number(cb.value))
+  );
 }
 function setChecked(group, values = []) {
   const set = new Set(values.map(Number));
@@ -63,7 +66,7 @@ function setChecked(group, values = []) {
 
 function setBadge(state) {
   const map = {
-    active:  "bg-green-600",
+    active:    "bg-green-600",
     scheduled: "bg-amber-600",
     concluded: "bg-zinc-600",
     noscheduled: "bg-zinc-600"
@@ -74,11 +77,13 @@ function setBadge(state) {
 
 function msg(el, text, kind="") {
   el.textContent = text || "";
-  el.className = "text-sm mt-2 " + (kind === "error" ? "text-red-600" :
-                                     kind === "ok" ? "text-green-700" : "text-zinc-600");
+  el.className = "text-sm mt-2 " + (
+    kind === "error" ? "text-red-600" :
+    kind === "ok"    ? "text-green-700" : "text-zinc-600"
+  );
 }
 
-// ===== Auth flow (magic link) =====
+// ===== Auth (magic link) =====
 async function checkSession() {
   const { data: { session } } = await db.auth.getSession();
   if (session) {
@@ -90,14 +95,15 @@ async function checkSession() {
     appBox.classList.add("hidden");
   }
 }
+
 sendLinkBtn.addEventListener("click", async () => {
   const email = (emailInput.value || "").trim();
   if (!email) { msg(loginMsg, "Escribe tu correo.", "error"); return; }
-
   msg(loginMsg, "Enviando enlace…");
+
   const { error } = await db.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.href } // vuelve a /admin.html
+    options: { emailRedirectTo: window.location.href }
   });
   if (error) msg(loginMsg, "No se pudo enviar el enlace.", "error");
   else msg(loginMsg, "Revisa tu correo y abre el enlace para entrar.", "ok");
@@ -108,9 +114,9 @@ logoutBtn.addEventListener("click", async () => {
   location.reload();
 });
 
-// ===== Data bootstrap =====
+// ===== Carga de datos =====
 async function bootstrapData() {
-  // 1) Estado público (visit_status)
+  // 1) Estado público
   try {
     const { data, error } = await db.rpc("visit_status");
     if (error) throw error;
@@ -122,18 +128,21 @@ async function bootstrapData() {
       : s.state === "scheduled" ? "Inscripciones programadas; aún no abren."
       : s.state === "concluded" ? "La visita concluyó."
       : "Aún no hay visita programada.";
+    } else {
+      setBadge("noscheduled");
+      stateDesc.textContent = "Aún no hay visita programada.";
     }
   } catch (_) {
     setBadge("noscheduled");
     stateDesc.textContent = "No se pudo leer el estado.";
   }
 
-  // 2) Cargar o crear fila de visitas (la más reciente)
+  // 2) Últimas visitas
   const { data: visits } = await db
     .from("visitas")
-    .select("*")
+    .select("id,title,start_date,end_date,is_open,open_at")
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(10);
 
   visitsTbody.innerHTML = "";
   if (visits && visits.length) {
@@ -150,10 +159,11 @@ async function bootstrapData() {
       `;
       visitsTbody.appendChild(tr);
     });
-    loadVisit(visits[0]); // por defecto, la más reciente
+    loadVisitById(visits[0].id);
   } else {
     // Si no hay, crea una por defecto
-    const today = new Date(); const yyyy = today.getFullYear(), mm = String(today.getMonth()+1).padStart(2,'0'), dd = String(today.getDate()).padStart(2,'0');
+    const today = new Date();
+    const yyyy = today.getFullYear(), mm = String(today.getMonth()+1).padStart(2,'0'), dd = String(today.getDate()).padStart(2,'0');
     const { data: inserted, error } = await db.from("visitas").insert({
       title: "Nueva visita",
       start_date: `${yyyy}-${mm}-${dd}`,
@@ -162,40 +172,37 @@ async function bootstrapData() {
       pm_days: [3,5],
       open_at: new Date().toISOString(),
       is_open: false
-    }).select("*").single();
-    if (!error) {
-      await bootstrapData();
+    }).select("id").single();
+    if (!error && inserted) {
       msg(appMsg, "Se creó una visita nueva por defecto.", "ok");
+      await bootstrapData();
     } else {
       msg(appMsg, "No se pudo crear una visita por defecto.", "error");
     }
   }
-
-  // Click en “Editar”
-  visitsTbody.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-id]");
-    if (!btn) return;
-    const id = Number(btn.dataset.id);
-    const row = [...visitsTbody.querySelectorAll("tr")]
-      .map(tr => ({
-        id: Number(tr.children[0].textContent),
-        title: tr.children[1].textContent,
-        start_date: tr.children[2].textContent,
-        end_date: tr.children[3].textContent,
-        is_open: tr.children[4].textContent === "true",
-        open_at: tr.children[5].textContent
-      }))
-      .find(r => r.id === id);
-    if (row) loadVisit(row);
-  });
 }
 
-function loadVisit(v) {
+// Delegación: click en “Editar”
+visitsTbody.addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-id]");
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  await loadVisitById(id);
+});
+
+async function loadVisitById(id) {
+  const { data: v, error } = await db
+    .from("visitas")
+    .select("id,title,start_date,end_date,is_open,open_at,am_days,pm_days")
+    .eq("id", id)
+    .single();
+  if (error || !v) { msg(appMsg, "No se pudo cargar la visita.", "error"); return; }
+
   currentVisitId = v.id;
   titleInput.value = v.title || "";
   startDateInput.value = (v.start_date || "").slice(0,10);
   endDateInput.value = (v.end_date || "").slice(0,10);
-  // open_at → datetime-local (sin Z)
+
   if (v.open_at) {
     const dt = new Date(v.open_at);
     const local = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -203,18 +210,18 @@ function loadVisit(v) {
   } else {
     openAtInput.value = "";
   }
-  // Días (si vienen en visits no los tenemos; volvemos a pedir detalle)
-  db.from("visitas").select("am_days, pm_days").eq("id", v.id).single().then(({ data }) => {
-    setChecked("am", data?.am_days || []);
-    setChecked("pm", data?.pm_days || []);
-  });
+
+  setChecked("am", v.am_days || []);
+  setChecked("pm", v.pm_days || []);
 }
 
 // ===== Actions =====
 openNowBtn.addEventListener("click", async () => {
   if (!currentVisitId) return;
   const nowIso = new Date().toISOString();
-  const { error } = await db.from("visitas").update({ is_open: true, open_at: nowIso }).eq("id", currentVisitId);
+  const { error } = await db.from("visitas")
+    .update({ is_open: true, open_at: nowIso })
+    .eq("id", currentVisitId);
   if (error) msg(appMsg, "No se pudo abrir.", "error");
   else { msg(appMsg, "Visita abierta desde ahora.", "ok"); await bootstrapData(); }
 });
@@ -224,18 +231,64 @@ scheduleBtn.addEventListener("click", async () => {
   const val = openAtInput.value;
   if (!val) { msg(appMsg, "Selecciona fecha/hora en 'Abrir (open_at)'.", "error"); return; }
   const iso = new Date(val).toISOString();
-  const { error } = await db.from("visitas").update({ is_open: true, open_at: iso }).eq("id", currentVisitId);
+  const { error } = await db.from("visitas")
+    .update({ is_open: true, open_at: iso })
+    .eq("id", currentVisitId);
   if (error) msg(appMsg, "No se pudo programar apertura.", "error");
   else { msg(appMsg, "Apertura programada.", "ok"); await bootstrapData(); }
 });
 
 closeBtn.addEventListener("click", async () => {
   if (!currentVisitId) return;
-  const { error } = await db.from("visitas").update({ is_open: false }).eq("id", currentVisitId);
+  const { error } = await db.from("visitas")
+    .update({ is_open: false })
+    .eq("id", currentVisitId);
   if (error) msg(appMsg, "No se pudo cerrar.", "error");
   else { msg(appMsg, "Visita cerrada.", "ok"); await bootstrapData(); }
 });
 
 saveWindowBtn.addEventListener("click", async () => {
   if (!currentVisitId) return;
-  const start = sta
+  const start = startDateInput.value;
+  const end = endDateInput.value;
+  if (!start || !end) { msg(appMsg, "Define inicio y fin.", "error"); return; }
+  const am = [...getCheckedSet("am")];
+  const pm = [...getCheckedSet("pm")];
+
+  const payload = {
+    title: titleInput.value || "Visita SC",
+    start_date: start,
+    end_date: end,
+    am_days: am,
+    pm_days: pm
+  };
+  const { error } = await db.from("visitas")
+    .update(payload)
+    .eq("id", currentVisitId);
+  if (error) msg(appMsg, "No se pudo guardar rango/días.", "error");
+  else { msg(appMsg, "Rango/días guardados.", "ok"); await bootstrapData(); }
+});
+
+newVisitBtn.addEventListener("click", async () => {
+  const today = new Date();
+  const yyyy = today.getFullYear(), mm = String(today.getMonth()+1).padStart(2,'0'), dd = String(today.getDate()).padStart(2,'0');
+  const { data, error } = await db.from("visitas").insert({
+    title: "Nueva visita",
+    start_date: `${yyyy}-${mm}-${dd}`,
+    end_date: `${yyyy}-${mm}-${dd}`,
+    am_days: [3,4,5,6,0],
+    pm_days: [3,5],
+    open_at: new Date().toISOString(),
+    is_open: false
+  }).select("id").single();
+  if (error) {
+    msg(appMsg, "No se pudo crear nueva visita.", "error");
+  } else {
+    msg(appMsg, "Nueva visita creada.", "ok");
+    await bootstrapData();
+    if (data?.id) await loadVisitById(data.id);
+  }
+});
+
+// ===== Start =====
+checkSession();
