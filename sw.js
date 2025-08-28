@@ -1,4 +1,4 @@
-const CACHE = "reserva-sc-v2"; // súbele la versión al cambiar archivos
+const CACHE = "reserva-sc-v3"; // súbele la versión al cambiar archivos
 const ASSETS = [
   "./",
   "./index.html",

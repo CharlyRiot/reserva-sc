@@ -80,14 +80,34 @@
         </div>
       </div>
 
-      <!-- Botones -->
-      <div class="mt-5 flex flex-wrap gap-2">
-        <button id="openNowBtn" class="btn btn-primary">Abrir ahora</button>
-        <button id="scheduleBtn" class="btn btn-outline">Programar apertura</button>
-        <button id="closeBtn" class="btn btn-outline">Cerrar</button>
-        <button id="saveWindowBtn" class="btn btn-outline">Guardar rango/días</button>
-        <button id="newVisitBtn" class="btn btn-outline">Crear nueva visita</button>
-      </div>
+     <!-- Botones (mejor marcados) -->
+<div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+  <button id="openNowBtn"
+    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 shadow-sm">
+    🔓 Abrir ahora
+  </button>
+
+  <button id="scheduleBtn"
+    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm">
+    🕒 Programar apertura
+  </button>
+
+  <button id="saveWindowBtn"
+    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm">
+    💾 Guardar rango/días
+  </button>
+
+  <button id="closeBtn"
+    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 shadow-sm">
+    🚫 Cerrar
+  </button>
+
+  <button id="newVisitBtn"
+    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-zinc-900 bg-zinc-200 hover:bg-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 shadow-sm">
+    ➕ Crear nueva visita
+  </button>
+</div>
+
 
       <p id="appMsg" class="text-sm mt-3 text-zinc-600"></p>
 
@@ -112,6 +132,6 @@
     </section>
   </div>
 
-  <script src="js/admin.js?v=2"></script>
+  <script src="js/admin.js?v=4"></script>
 </body>
 </html>
