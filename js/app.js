@@ -82,12 +82,12 @@ async function loadStatusAndConfigure() {
 
       if (!s) {
         statusTitle.textContent = "Sin fecha programada";
-        statusText.textContent = "Aún no hay fecha de la próxima visita. ¡Gracias por estar atento!";
+        statusText.textContent = "Aún no se pueden hacer reservaciones. ¡Gracias por estar atento!";
         return;
       }
 
       if (s.state === "scheduled") {
-        statusTitle.textContent = "Inscripciones aún no abiertas";
+        statusTitle.textContent = "Reservas aún no abiertas";
         statusText.textContent = s.message || "Vuelve pronto.";
       } else if (s.state === "concluded") {
         statusTitle.textContent = "La visita concluyó";
