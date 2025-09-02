@@ -53,7 +53,7 @@ function setFormMsg(text, kind = "") {
 //  (nota: con js/sw.js el scope es /js/*)
 // ==========================
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js"); // <-- raíz
+  navigator.serviceWorker.register("./sw.js"); // <- en subcarpeta funciona
 }
 
 
