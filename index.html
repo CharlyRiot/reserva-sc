@@ -46,12 +46,17 @@
   </div>
 
   <!-- STATUS (cuando no hay inscripción activa, o concluyó) -->
-  <section id="statusBox" class="hidden text-center space-y-2">
-    <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_qp1q7mct.json" background="transparent" speed="1" style="width:120px;height:120px" autoplay></lottie-player>
-    <h2 class="text-lg font-semibold" id="statusTitle">Arreglos de Predicación</h2>
-    <p class="text-sm text-zinc-600" id="statusText"></p>
-  </section>
-
+<section id="statusBox" class="hidden text-center space-y-3">
+  <img
+    id="statusGif"
+    src="img/ups.gif"
+    alt="Sin fecha programada"
+    class="mx-auto w-40 h-40 rounded-xl shadow-sm object-contain"
+    onerror="this.style.display='none'"
+  />
+  <h2 class="text-lg font-semibold" id="statusTitle">Arreglos de Predicación</h2>
+  <p class="text-sm text-zinc-600" id="statusText"></p>
+</section>
   <!-- FORM -->
   <form id="reservaForm" class="space-y-4 hidden">
     <div>

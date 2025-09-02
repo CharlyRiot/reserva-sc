@@ -6,6 +6,7 @@ const ASSETS = [
   "./css/style.css",
   "./img/icon-192.png",
   "./img/icon-512.png",
+  "./img/ups.gif", 
   "./assets/Done.json",
   "./js/app.js"
 ];
