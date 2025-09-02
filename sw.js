@@ -1,4 +1,4 @@
-const CACHE = "reserva-sc-v5"; // súbele la versión al cambiar archivos
+const CACHE = "reserva-sc-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,10 +6,11 @@ const ASSETS = [
   "./css/style.css",
   "./img/icon-192.png",
   "./img/icon-512.png",
-  "./img/ups.gif", 
+  "./img/ups.gif",
   "./assets/Done.json",
   "./js/app.js"
 ];
+
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
@@ -27,23 +28,33 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
 
-  // App Shell para navegaciones
+  // Navegaciones → App Shell
   if (req.mode === "navigate") {
-    e.respondWith(
-      fetch(req).catch(() => caches.match("./index.html"))
-    );
+    e.respondWith(fetch(req).catch(() => caches.match("./index.html")));
     return;
   }
+
+  // Solo GET y http(s)
+  if (req.method !== "GET") return;
+  if (!/^https?:/.test(req.url)) return;
+
+  // No cachear llamadas a Supabase (REST/RPC) ni otras APIs
+  const u = new URL(req.url);
+  if (u.hostname.endsWith("supabase.co")) return;
 
   // Stale-while-revalidate para estáticos
   e.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req).then((netRes) => {
-        const copy = netRes.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy));
+        // Guarda en caché solo GET http(s) exitosas
+        if (netRes && netRes.ok) {
+          const copy = netRes.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
         return netRes;
       }).catch(() => cached);
       return cached || fetchPromise;
     })
   );
 });
+
