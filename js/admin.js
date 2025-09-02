@@ -283,6 +283,34 @@ newVisitBtn?.addEventListener("click", async () => {
     if (data?.id) await loadVisitById(data.id);
   }
 });
+// ===== Help modal =====
+const helpBtn   = document.getElementById("helpBtn");
+const helpModal = document.getElementById("helpModal");
+const helpClose = document.getElementById("helpClose");
+const helpClose2 = document.getElementById("helpClose2");
+const helpCopy  = document.getElementById("helpCopy");
+
+function openHelp(){ helpModal?.classList.remove("hidden"); }
+function closeHelp(){ helpModal?.classList.add("hidden"); }
+
+helpBtn?.addEventListener("click", openHelp);
+helpClose?.addEventListener("click", closeHelp);
+helpClose2?.addEventListener("click", closeHelp);
+helpModal?.addEventListener("click", (e) => {
+  if (e.target === helpModal) closeHelp(); // cerrar al click fuera
+});
+
+helpCopy?.addEventListener("click", async () => {
+  const steps = [
+    "1) Crear nueva visita (queda cerrada).",
+    "2) Configura Título, Inicio/Fin y AM/PM. Pulsa Guardar rango/días.",
+    "3) Abrir ahora (visible inmediato) o Programar apertura con fecha/hora.",
+    "4) Verifica Estado: active o scheduled.",
+    "5) En la pública recarga; si está active y el día aplica, podrán reservar.",
+    "6) Al terminar, Cerrar (o deja que pase Fin)."
+  ].join("\\n");
+  try { await navigator.clipboard.writeText(steps); } catch {}
+});
 
 // ===== Start =====
 (async function start() {

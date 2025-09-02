@@ -39,6 +39,15 @@
         </div>
       </div>
 
+<div class="flex items-center justify-between mb-3">
+  <h2 class="font-medium">Control de la visita</h2>
+  <div class="flex gap-2">
+    <button id="helpBtn" class="btn btn-outline">¿Cómo publicar?</button>
+    <button id="logoutBtn" class="btn btn-outline">Salir</button>
+  </div>
+</div>
+
+
       <!-- Estado -->
       <div class="mb-4">
         <div class="text-sm">
@@ -129,6 +138,31 @@
           <tbody id="visitsTbody"></tbody>
         </table>
       </div>
+      <!-- Modal de ayuda -->
+<div id="helpModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50">
+  <div class="mx-auto mt-16 max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-lg font-semibold">Cómo crear y publicar una visita</h3>
+      <button id="helpClose" class="px-3 py-1 rounded-lg border hover:bg-zinc-50">Cerrar</button>
+    </div>
+
+    <ol class="list-decimal pl-5 space-y-2 text-sm text-zinc-700">
+      <li><b>Crear nueva visita</b> → genera una fila <i>cerrada</i>.</li>
+      <li><b>Configura</b> Título, <b>Inicio</b>/<b>Fin</b> y días <b>AM/PM</b> permitidos. Pulsa <b>Guardar rango/días</b>.</li>
+      <li>Para abrir <b>ahora</b>: pulsa <b>Abrir ahora</b>.</li>
+      <li>Para <b>programar</b>: elige fecha/hora en <b>Abrir (open_at)</b> y pulsa <b>Programar apertura</b>.</li>
+      <li>El <b>Estado</b> debe quedar <b>active</b> (visible) o <b>scheduled</b> (programada).</li>
+      <li>En la pública recarga la página. Si está <b>active</b> y el día cae en tu ventana/días, ya pueden reservar.</li>
+      <li>Para terminar, pulsa <b>Cerrar</b> (o espera a que pase <b>Fin</b>).</li>
+    </ol>
+
+    <div class="mt-4 flex gap-2">
+      <button id="helpCopy" class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Copiar pasos</button>
+      <button id="helpClose2" class="px-3 py-2 rounded-lg border hover:bg-zinc-50">Listo</button>
+    </div>
+  </div>
+</div>
+
     </section>
   </div>
 
