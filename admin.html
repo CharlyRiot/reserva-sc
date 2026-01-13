@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" crossorigin src="/reserva-sc/assets/admin-Dx7ldWxA.js"></script>
+  <script type="module" crossorigin src="/reserva-sc/assets/admin-DHXHbN1a.js"></script>
   <link rel="modulepreload" crossorigin href="/reserva-sc/assets/style-Dz1zmf2x.js">
   <link rel="stylesheet" crossorigin href="/reserva-sc/assets/style-ZauOz8va.css">
 </head>
@@ -19,7 +19,7 @@
       <div>
         <p class="admin-eyebrow">Panel</p>
         <h1>Reserva SC · Admin</h1>
-        <p class="admin-sub">Abre, programa y ajusta la visita con un flujo claro y sin tocar SQL.</p>
+        <p class="admin-sub">Define la ventana de reservas y publica la visita con un flujo claro.</p>
       </div>
       <div class="admin-hero-actions">
         <a class="ghost-link" href="./">Ver pagina publica</a>
@@ -44,7 +44,7 @@
       <div class="admin-toolbar">
         <div>
           <h2 class="section-title">Control de la visita</h2>
-          <p class="section-sub">Actualiza el estado, define el rango y publica con un clic.</p>
+          <p class="section-sub">1) Define rango y dias. 2) Publica ahora o programa.</p>
         </div>
         <div class="admin-toolbar-actions">
           <button id="helpBtn" class="admin-btn outline">Guia rapida</button>
@@ -64,23 +64,23 @@
 
         <!-- Form ventana -->
         <section class="card">
-          <h3 class="card-title">Ventana y titulo</h3>
-          <p class="card-sub">Define el periodo visible y el nombre de la visita.</p>
+          <h3 class="card-title">Ventana de reservas</h3>
+          <p class="card-sub">Elige el titulo y las fechas permitidas para reservar.</p>
           <div class="form-grid">
             <div class="field">
               <label class="field-label" title="Nombre visible de la visita en la pagina publica.">Titulo</label>
               <input id="title" class="field-input" placeholder="Visita SC ..." />
             </div>
             <div class="field">
-              <label class="field-label" title="Fecha/hora en que el formulario se publica. Si la dejas vacia, usa 'Abrir ahora'.">Abrir (open_at)</label>
+              <label class="field-label" title="Fecha/hora en que el formulario se publica. Si la dejas vacia, usa 'Abrir ahora'.">Publicar en (opcional)</label>
               <input id="openAt" type="datetime-local" class="field-input" />
             </div>
             <div class="field">
-              <label class="field-label" title="Primer dia permitido para reservar. Limita el calendario.">Inicio (start_date)</label>
+              <label class="field-label" title="Primer dia permitido para reservar. Limita el calendario.">Inicio de reservas</label>
               <input id="startDate" type="date" class="field-input" />
             </div>
             <div class="field">
-              <label class="field-label" title="Ultimo dia permitido para reservar.">Fin (end_date)</label>
+              <label class="field-label" title="Ultimo dia permitido para reservar.">Fin de reservas</label>
               <input id="endDate" type="date" class="field-input" />
             </div>
           </div>
@@ -104,39 +104,13 @@
 
         <!-- Botones -->
         <section class="card">
-          <h3 class="card-title">Acciones rapidas</h3>
-          <p class="card-sub">Abre ahora o programa una apertura.</p>
+          <h3 class="card-title">Publicacion</h3>
+          <p class="card-sub">Guarda cambios y controla el estado de la visita.</p>
           <div class="action-grid">
             <button id="openNowBtn" class="admin-btn success">Abrir ahora</button>
             <button id="scheduleBtn" class="admin-btn warn">Programar apertura</button>
             <button id="saveWindowBtn" class="admin-btn primary">Guardar rango/dias</button>
             <button id="closeBtn" class="admin-btn danger">Cerrar visita</button>
-            <button id="newVisitBtn" class="admin-btn light">Crear nueva visita</button>
-          </div>
-        </section>
-
-        <section class="card admin-table span-2">
-          <div class="card-head">
-            <div>
-              <h3 class="card-title">Ultimas visitas</h3>
-              <p class="card-sub">Historial rapido para editar la mas reciente.</p>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Titulo</th>
-                  <th>Inicio</th>
-                  <th>Fin</th>
-                  <th>is_open</th>
-                  <th>open_at</th>
-                  <th>Accion</th>
-                </tr>
-              </thead>
-              <tbody id="visitsTbody"></tbody>
-            </table>
           </div>
         </section>
       </div>
@@ -148,18 +122,16 @@
     <div id="helpModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50">
       <div class="mx-auto mt-16 max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold">Como crear y publicar una visita</h3>
+          <h3 class="text-lg font-semibold">Como publicar una visita</h3>
           <button id="helpClose" class="px-3 py-1 rounded-lg border hover:bg-zinc-50">Cerrar</button>
         </div>
 
         <ol class="list-decimal pl-5 space-y-2 text-sm text-zinc-700">
-          <li><b>Crear nueva visita</b> → genera una fila cerrada.</li>
-          <li><b>Configura</b> titulo, <b>inicio</b>/<b>fin</b> y dias AM/PM. Pulsa <b>Guardar rango/dias</b>.</li>
-          <li>Para abrir ahora: pulsa <b>Abrir ahora</b>.</li>
-          <li>Para programar: elige fecha/hora en <b>Abrir (open_at)</b> y pulsa <b>Programar apertura</b>.</li>
-          <li>El estado debe quedar <b>active</b> o <b>scheduled</b>.</li>
-          <li>En https://charlyriot.github.io/reserva-sc/ ya pueden reservar si esta active.</li>
-          <li>Para terminar, pulsa <b>Cerrar</b> (o espera a que pase fin).</li>
+          <li><b>Define la ventana</b>: titulo, inicio/fin y dias AM/PM. Pulsa <b>Guardar rango/dias</b>.</li>
+          <li><b>Publica ahora</b>: pulsa <b>Abrir ahora</b> y la pagina publica se habilita al instante.</li>
+          <li><b>Publica despues</b>: elige fecha/hora en <b>Publicar en</b> y pulsa <b>Programar apertura</b>.</li>
+          <li>Mientras este <b>scheduled</b>, el formulario no se muestra. Al llegar la hora se activa solo.</li>
+          <li>Si necesitas cerrar todo, pulsa <b>Cerrar visita</b>.</li>
         </ol>
 
         <div class="mt-4 flex gap-2">
