@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/reserva-sc/assets/manifest-BzZW9SOF.webmanifest" />
+  <meta name="theme-color" content="#000000" />
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <link rel="apple-touch-icon" href="/reserva-sc/assets/icon-192-BlYlPfHq.png" />
+  <meta name="apple-mobile-web-app-title" content="Reserva SC" />
+
+  <title>Reserva SC</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CSS -->
+<!-- Lottie -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+  <style>
+    .glass{ backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); background:rgba(255,255,255,.75); }
+    .fade{ animation:fade .4s ease both; } @keyframes fade{ from{opacity:0;transform:translateY(6px)} }
+    .btn{ border-radius:.75rem; padding:.75rem 1rem; font-weight:500; transition:all .2s; }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    .btn-primary{ background:#000; color:#fff; } .btn-primary:hover{ background:#18181b; }
+    .btn-outline{ border:1px solid #d4d4d8; } .btn-outline:hover{ background:#f4f4f5; }
+    .muted{ color:#71717a; }
+  </style>
+  <script type="module" crossorigin src="/reserva-sc/assets/main-D4nKT5zE.js"></script>
+  <link rel="modulepreload" crossorigin href="/reserva-sc/assets/style-DVQik4Xl.js">
+  <link rel="stylesheet" crossorigin href="/reserva-sc/assets/style-CJQhVO6W.css">
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+
+<div class="glass w-full max-w-md p-7 rounded-2xl shadow-xl fade">
+  <div class="mb-6 text-center">
+    <lottie-player src="https://assets7.lottiefiles.com/packages/lf20_puciaact.json"
+                   background="transparent" speed="1"
+                   style="width:40px;height:40px" loop autoplay class="mx-auto"></lottie-player>
+    <h1 class="text-xl font-semibold">Arreglos de Predicación con Superintendente de Circuito</h1>
+    <p class="text-sm text-gray-500 mt-1">Malintzi LSM</p>
+    <a class="btn btn-outline mt-3 inline-block" href="https://charlyriot.github.io/reserva-sc/admin">Admin</a>
+  </div>
+
+  <!-- STATUS (cuando no hay inscripción activa, o concluyó) -->
+<section id="statusBox" class="hidden text-center space-y-3">
+  <img
+    id="statusGif"
+    src="/reserva-sc/assets/ups-DxXMd7Ob.gif"
+    alt="Sin fecha programada"
+    class="mx-auto w-40 h-40 rounded-xl shadow-sm object-contain"
+    onerror="this.style.display='none'"
+  />
+  <h2 class="text-lg font-semibold" id="statusTitle">Arreglos de Predicación</h2>
+  <p class="text-sm text-zinc-600" id="statusText"></p>
+</section>
+  <!-- FORM -->
+  <form id="reservaForm" class="space-y-4 hidden">
+    <div>
+      <label for="name" class="block text-sm mb-1">Nombre completo (Evita duplicados) <span class="text-red-500">*</span></label>
+      <input id="name" type="text" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required placeholder="Escribe tu nombre" />
+    </div>
+
+    <div>
+      <label for="date" class="block text-sm mb-1">¿Qué día? <span class="text-red-500">*</span></label>
+      <input id="date" type="date" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required aria-describedby="dateHelp" />
+      <p id="dateHelp" class="text-xs muted mt-1">La salida matutina es a las 9:00 a.m.</p>
+    </div>
+
+    <!-- Turno -->
+    <div>
+      <label for="slot" class="block text-sm mb-1">Turno (a.m./p.m.) <span class="text-red-500">*</span></label>
+      <select id="slot" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required>
+        <option value="">Seleccione</option>
+        <option value="AM" id="optAM">Mañana (9:00 a.m.)</option>
+        <option value="PM" id="optPM">Tarde (4:30 p.m.)</option>
+      </select>
+      <p id="slotHelp" class="text-xs muted mt-1">La tarde solo está disponible Mié y Vie. 4:30p.m - 6:00 p.m.</p>
+    </div>
+
+    <div>
+      <label for="person" class="block text-sm mb-1">Reservar con <span class="text-red-500">*</span></label>
+      <select id="person" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-black" required>
+        <option value="">Seleccione</option>
+        <option value="SC" id="optSC">Superintendente de Circuito</option>
+        <option value="Esposa" id="optEsposa">Esposa del SC</option>
+      </select>
+      <p class="text-xs muted mt-1">Las opciones se deshabilitan si ya están ocupadas para ese día y turno.</p>
+    </div>
+
+    <button type="submit" id="submitBtn" class="btn btn-primary w-full">Reservar cupo</button>
+    <p id="formMsg" class="text-sm mt-1"></p>
+  </form>
+
+  <!-- SUCCESS -->
+  <section id="successBox" class="success hidden">
+    <div class="success-wrap text-center">
+      <lottie-player id="doneAnim" src="assets/Done.json" background="transparent" speed="1" class="success-check" autoplay loop></lottie-player>
+
+      <h2 class="success-title">¡Gracias <span id="thanksName"></span>!</h2>
+
+      <p class="success-text">
+        Tu día de predicación ha sido <b>registrado y reservado</b> para
+        <b><span id="thanksDate"></span></b> a las <b><span id="thanksTime"></span></b> con
+        <b><span id="thanksPerson"></span></b>.
+      </p>
+
+      <a href="#" id="newBtn" class="btn btn-outline success-btn">Hacer otra reserva</a>
+    </div>
+  </section>
+
+  <!-- DUPLICATE/ERROR -->
+  <section id="errorBox" class="hidden text-center space-y-3">
+    <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_qp1q7mct.json" background="transparent" speed="1" style="width:150px;height:150px" autoplay></lottie-player>
+    <h2 class="text-lg font-semibold">Cupo ocupado</h2>
+    <p class="text-sm text-zinc-600">Ese <b>día + persona + turno</b> ya fue tomado. Elige otra combinación.</p>
+    <a href="#" id="retryBtn" class="btn btn-outline inline-block mt-1">Volver al formulario</a>
+  </section>
+</div>
+
+<!-- App JS (toda la lógica) -->
+</body>
+</html>
+
+
