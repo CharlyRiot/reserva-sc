@@ -1,10 +1,28 @@
-// ===== Supabase config =====
-const SUPABASE_URL = "https://sefqzqeztnazpbsolbos.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlZnF6cWV6dG5henBic29sYm9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNDM2MjEsImV4cCI6MjA3MDYxOTYyMX0.9aSakQ3GL3I_H1voXTCN2WdaCMBRDMu5kmLJm3bVa6o";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ===== Firebase SDK Imports =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, limit, addDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import { getAuth, sendSignInLinkToEmail, signInWithEmailLink, isSignInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-// ===== UI refs =====
+// ===== Firebase Config =====
+// Pega aquí tu objeto firebaseConfig de la consola de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCkQisqMEqmKrAbhBPl0xroQQFZFYT0TkY",
+  authDomain: "reserva-sc.firebaseapp.com",
+  projectId: "reserva-sc",
+  storageBucket: "reserva-sc.firebasestorage.app",
+  messagingSenderId: "651352627398",
+  appId: "1:651352627398:web:8120205020de4f6a89dfc7",
+  measurementId: "G-3KZTLF3SBB",
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ===== UI refs (CORREGIDO) =====
 const $ = (id) => document.getElementById(id);
+
 const loginBox = $("loginBox");
 const appBox = $("appBox");
 const emailInput = $("email");
@@ -12,27 +30,27 @@ const sendLinkBtn = $("sendLinkBtn");
 const loginMsg = $("loginMsg");
 
 const titleInput = $("title");
-const openAtInput = $("openAt");
-const startDateInput = $("startDate");
-const endDateInput = $("endDate");
+const openAtInput = $("openAt");          // <-- CORREGIDO
+const startDateInput = $("startDate");    // <-- CORREGIDO
+const endDateInput = $("endDate");        // <-- CORREGIDO
 const amDaysBox = $("amDays");
 const pmDaysBox = $("pmDays");
 
 const openNowBtn = $("openNowBtn");
-const scheduleBtn = $("scheduleBtn");
-const closeBtn = $("closeBtn");
-const saveWindowBtn = $("saveWindowBtn");
-const newVisitBtn = $("newVisitBtn");
-const appMsg = $("appMsg");
-const stateBadge = $("stateBadge");
-const stateDesc = $("stateDesc");
-const visitsTbody = $("visitsTbody");
-const logoutBtn = $("logoutBtn");
+const scheduleBtn = $("scheduleBtn");      // <-- CORREGIDO
+const closeBtn = $("closeBtn");            // <-- CORREGIDO
+const saveWindowBtn = $("saveWindowBtn");  // <-- CORREGIDO
+const newVisitBtn = $("newVisitBtn");      // <-- CORREGIDO
+const appMsg = $("appMsg");                // <-- CORREGIDO
+const stateBadge = $("stateBadge");        // <-- CORREGIDO
+const stateDesc = $("stateDesc");          // <-- CORREGIDO
+const visitsTbody = $("visitsTbody");      // <-- CORREGIDO
+const logoutBtn = $("logoutBtn");          // <-- CORREGIDO
 
 let currentVisitId = null;
 
-// ===== Helpers =====
-const DAYS = ["D","L","M","X","J","V","S"]; // 0..6
+// ===== Helpers (Sin cambios) =====
+const DAYS = ["D","L","M","X","J","V","S"];
 
 function buildDays(container, name) {
   if (!container) return;
@@ -82,61 +100,56 @@ function msg(el, text, kind="") {
   );
 }
 
-// ===== Procesa #access_token del magic-link (muy importante) =====
-async function processHashSession() {
-  if (!location.hash) return;
-  const params = new URLSearchParams(location.hash.substring(1));
-  const access_token = params.get("access_token");
-  const refresh_token = params.get("refresh_token");
-  if (access_token && refresh_token) {
-    try {
-      await db.auth.setSession({ access_token, refresh_token });
-      // Limpia el hash para no dejar el token en la barra
-      history.replaceState({}, document.title, location.pathname + location.search);
-    } catch (e) {
-      console.error("setSession error", e);
-    }
-  }
-}
-
-// ===== Auth (magic link) =====
+// ===== Auth (magic link) - Adaptado a Firebase =====
 async function checkSession() {
-  const { data: { session } } = await db.auth.getSession();
-  if (session) {
-    loginBox.classList.add("hidden");
-    appBox.classList.remove("hidden");
-    await bootstrapData();
-  } else {
-    loginBox.classList.remove("hidden");
-    appBox.classList.add("hidden");
-  }
+  // onAuthStateChanged es el listener principal de Firebase
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      loginBox.classList.add("hidden");
+      appBox.classList.remove("hidden");
+      await bootstrapData();
+    } else {
+      loginBox.classList.remove("hidden");
+      appBox.classList.add("hidden");
+    }
+  });
 }
 
 sendLinkBtn?.addEventListener("click", async () => {
   const email = (emailInput.value || "").trim();
   if (!email) { msg(loginMsg, "Escribe tu correo.", "error"); return; }
   msg(loginMsg, "Enviando enlace…");
-  const { error } = await db.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href }  // vuelve a /admin.html
-  });
-  if (error) msg(loginMsg, "No se pudo enviar el enlace.", "error");
-  else msg(loginMsg, "Revisa tu correo y abre el enlace para entrar.", "ok");
+
+  const actionCodeSettings = {
+    url: window.location.href, // La página a la que redirigirá
+    handleCodeInApp: true,
+  };
+
+  try {
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    window.localStorage.setItem('emailForSignIn', email);
+    msg(loginMsg, "Revisa tu correo y abre el enlace para entrar.", "ok");
+  } catch (error) {
+    msg(loginMsg, "No se pudo enviar el enlace.", "error");
+    console.error(error);
+  }
 });
 
 logoutBtn?.addEventListener("click", async () => {
-  await db.auth.signOut();
-  location.reload();
+  await signOut(auth);
+  location.reload(); // Recarga para limpiar el estado
 });
 
-// ===== Data bootstrap =====
+// ===== Data bootstrap - Adaptado a Firebase =====
 async function bootstrapData() {
   // 1) Estado público
   try {
-    const { data, error } = await db.rpc("visit_status");
-    if (error) throw error;
-    const s = (data && data[0]) ? data[0] : null;
-    if (s) {
+    // Leemos el documento "visitStatus" de la colección "settings"
+    const statusDocRef = doc(db, "settings", "visitStatus");
+    const statusDocSnap = await getDoc(statusDocRef);
+
+    if (statusDocSnap.exists()) {
+      const s = statusDocSnap.data();
       setBadge(s.state);
       stateDesc.textContent =
         s.state === "active"    ? "La visita está abierta. El formulario es visible."
@@ -147,34 +160,42 @@ async function bootstrapData() {
       setBadge("noscheduled");
       stateDesc.textContent = "Aún no hay visita programada.";
     }
-  } catch {
+  } catch (err) {
+    console.error("Error loading status:", err);
     setBadge("noscheduled");
     stateDesc.textContent = "No se pudo leer el estado.";
   }
 
   // 2) Últimas visitas
-  const { data: visits, error } = await db
-    .from("visitas")
-    .select("id,title,start_date,end_date,is_open,open_at")
-    .order("created_at", { ascending: false })
-    .limit(10);
+  try {
+    const q = query(collection(db, "visitas"),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+    const querySnapshot = await getDocs(q);
 
-  visitsTbody.innerHTML = "";
-  if (!error && visits?.length) {
-    visits.forEach(v => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="border p-2">${v.id}</td>
-        <td class="border p-2">${v.title || ""}</td>
-        <td class="border p-2">${v.start_date || ""}</td>
-        <td class="border p-2">${v.end_date || ""}</td>
-        <td class="border p-2">${v.is_open ? "true" : "false"}</td>
-        <td class="border p-2">${v.open_at || ""}</td>
-        <td class="border p-2"><button data-id="${v.id}" class="px-2 py-1 border rounded">Editar</button></td>
-      `;
-      visitsTbody.appendChild(tr);
-    });
-    await loadVisitById(visits[0].id);
+    visitsTbody.innerHTML = "";
+    if (!querySnapshot.empty) {
+      querySnapshot.forEach((doc) => {
+        const v = { id: doc.id, ...doc.data() };
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="border p-2">${v.id}</td>
+          <td class="border p-2">${v.title || ""}</td>
+          <td class="border p-2">${v.startDate || ""}</td>
+          <td class="border p-2">${v.endDate || ""}</td>
+          <td class="border p-2">${v.isOpen ? "true" : "false"}</td>
+          <td class="border p-2">${v.openAt ? new Date(v.openAt.seconds * 1000).toLocaleString() : ""}</td>
+          <td class="border p-2"><button data-id="${v.id}" class="px-2 py-1 border rounded">Editar</button></td>
+        `;
+        visitsTbody.appendChild(tr);
+      });
+      // Carga la primera visita de la lista por defecto
+      await loadVisitById(querySnapshot.docs[0].id);
+    }
+  } catch (error) {
+    console.error("Error fetching visits:", error);
+    msg(appMsg, "No se pudieron cargar las visitas.", "error");
   }
 }
 
@@ -182,66 +203,80 @@ async function bootstrapData() {
 visitsTbody?.addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-id]");
   if (!btn) return;
-  await loadVisitById(Number(btn.dataset.id));
+  await loadVisitById(btn.dataset.id);
 });
 
 async function loadVisitById(id) {
-  const { data: v, error } = await db
-    .from("visitas")
-    .select("id,title,start_date,end_date,is_open,open_at,am_days,pm_days")
-    .eq("id", id).single();
-  if (error || !v) { msg(appMsg, "No se pudo cargar la visita.", "error"); return; }
+  try {
+    const docRef = doc(db, "visitas", id);
+    const docSnap = await getDoc(docRef);
 
-  currentVisitId = v.id;
-  titleInput.value = v.title || "";
-  startDateInput.value = (v.start_date || "").slice(0,10);
-  endDateInput.value = (v.end_date || "").slice(0,10);
+    if (docSnap.exists()) {
+      const v = { id: docSnap.id, ...docSnap.data() };
+      currentVisitId = v.id;
+      titleInput.value = v.title || "";
+      startDateInput.value = v.startDate || "";
+      endDateInput.value = v.endDate || "";
+      
+      if (v.openAt && v.openAt.seconds) {
+        const local = new Date(v.openAt.seconds * 1000).toISOString().slice(0, 16);
+        openAtInput.value = local;
+      } else {
+        openAtInput.value = "";
+      }
 
-  if (v.open_at) {
-    const dt = new Date(v.open_at);
-    const local = new Date(dt.getTime() - dt.getTimezoneOffset()*60000)
-      .toISOString().slice(0,16);
-    openAtInput.value = local;
-  } else {
-    openAtInput.value = "";
+      setChecked("am", v.amDays || []);
+      setChecked("pm", v.pmDays || []);
+    } else {
+      msg(appMsg, "No se pudo cargar la visita.", "error");
+    }
+  } catch (error) {
+    console.error("Error loading visit by ID:", error);
+    msg(appMsg, "No se pudo cargar la visita.", "error");
   }
-
-  setChecked("am", v.am_days || []);
-  setChecked("pm", v.pm_days || []);
 }
 
-// ===== Actions =====
+// ===== Actions - Adaptados a Firebase =====
 openNowBtn?.addEventListener("click", async () => {
   if (!currentVisitId) return;
-  const nowIso = new Date().toISOString();
-  const { error } = await db.from("visitas")
-    .update({ is_open: true, open_at: nowIso })
-    .eq("id", currentVisitId);
-  if (error) msg(appMsg, "No se pudo abrir.", "error");
-  else { msg(appMsg, "Visita abierta desde ahora.", "ok"); await bootstrapData(); }
+  try {
+    const docRef = doc(db, "visitas", currentVisitId);
+    await updateDoc(docRef, { isOpen: true, openAt: serverTimestamp() });
+    msg(appMsg, "Visita abierta desde ahora.", "ok");
+    await bootstrapData();
+  } catch (error) {
+    msg(appMsg, "No se pudo abrir.", "error");
+    console.error(error);
+  }
 });
 
 scheduleBtn?.addEventListener("click", async () => {
-  if (!currentVisitId) return;
-  const val = openAtInput.value;
-  if (!val) { msg(appMsg, "Selecciona fecha/hora en 'Abrir (open_at)'.", "error"); return; }
-  const iso = new Date(val).toISOString();
-  const { error } = await db.from("visitas")
-    .update({ is_open: true, open_at: iso })
-    .eq("id", currentVisitId);
-  if (error) msg(appMsg, "No se pudo programar apertura.", "error");
-  else { msg(appMsg, "Apertura programada.", "ok"); await bootstrapData(); }
+  if (!currentVisitId || !openAtInput.value) { msg(appMsg, "Selecciona fecha/hora en 'Abrir (open_at)'.", "error"); return; }
+  try {
+    const docRef = doc(db, "visitas", currentVisitId);
+    await updateDoc(docRef, { isOpen: true, openAt: new Date(openAtInput.value) });
+    msg(appMsg, "Apertura programada.", "ok");
+    await bootstrapData();
+  } catch (error) {
+    msg(appMsg, "No se pudo programar apertura.", "error");
+    console.error(error);
+  }
 });
 
 closeBtn?.addEventListener("click", async () => {
   if (!currentVisitId) return;
-  const { error } = await db.from("visitas")
-    .update({ is_open: false })
-    .eq("id", currentVisitId);
-  if (error) msg(appMsg, "No se pudo cerrar.", "error");
-  else { msg(appMsg, "Visita cerrada.", "ok"); await bootstrapData(); }
+  try {
+    const docRef = doc(db, "visitas", currentVisitId);
+    await updateDoc(docRef, { isOpen: false });
+    msg(appMsg, "Visita cerrada.", "ok");
+    await bootstrapData();
+  } catch (error) {
+    msg(appMsg, "No se pudo cerrar.", "error");
+    console.error(error);
+  }
 });
 
+// Bloque corregido en admin.js
 saveWindowBtn?.addEventListener("click", async () => {
   if (!currentVisitId) return;
   const start = startDateInput.value;
@@ -252,38 +287,46 @@ saveWindowBtn?.addEventListener("click", async () => {
 
   const payload = {
     title: titleInput.value || "Visita SC",
-    start_date: start,
-    end_date: end,
-    am_days: am,
-    pm_days: pm
+    start_date: start, // <-- CORREGIDO a snake_case
+    end_date: end,   // <-- CORREGIDO a snake_case
+    am_days: am,     // <-- CORREGIDO a snake_case
+    pm_days: pm      // <-- CORREGIDO a snake_case
   };
-  const { error } = await db.from("visitas")
-    .update(payload)
-    .eq("id", currentVisitId);
-  if (error) msg(appMsg, "No se pudo guardar rango/días.", "error");
-  else { msg(appMsg, "Rango/días guardados.", "ok"); await bootstrapData(); }
+  try {
+    const docRef = doc(db, "visitas", currentVisitId);
+    await updateDoc(docRef, payload);
+    msg(appMsg, "Rango/días guardados.", "ok");
+    await bootstrapData();
+  } catch (error) {
+    msg(appMsg, "No se pudo guardar.", "error");
+    console.error(error);
+  }
 });
 
 newVisitBtn?.addEventListener("click", async () => {
   const today = new Date();
   const yyyy = today.getFullYear(), mm = String(today.getMonth()+1).padStart(2,'0'), dd = String(today.getDate()).padStart(2,'0');
-  const { data, error } = await db.from("visitas").insert({
+  const payload = {
     title: "Nueva visita",
-    start_date: `${yyyy}-${mm}-${dd}`,
-    end_date: `${yyyy}-${mm}-${dd}`,
-    am_days: [3,4,5,6,0],
-    pm_days: [3,5],
-    open_at: new Date().toISOString(),
-    is_open: false
-  }).select("id").single();
-  if (error) msg(appMsg, "No se pudo crear nueva visita.", "error");
-  else {
+    startDate: `${yyyy}-${mm}-${dd}`,
+    endDate: `${yyyy}-${mm}-${dd}`,
+    amDays: [3,4,5,6,0],
+    pmDays: [3,5],
+    isOpen: false,
+    createdAt: serverTimestamp() // Usar serverTimestamp es mejor
+  };
+  try {
+    const docRef = await addDoc(collection(db, "visitas"), payload);
     msg(appMsg, "Nueva visita creada.", "ok");
     await bootstrapData();
-    if (data?.id) await loadVisitById(data.id);
+    await loadVisitById(docRef.id);
+  } catch (error) {
+    msg(appMsg, "No se pudo crear nueva visita.", "error");
+    console.error(error);
   }
 });
-// ===== Help modal =====
+
+// ===== Help modal (Sin cambios) =====
 const helpBtn   = document.getElementById("helpBtn");
 const helpModal = document.getElementById("helpModal");
 const helpClose = document.getElementById("helpClose");
@@ -297,7 +340,7 @@ helpBtn?.addEventListener("click", openHelp);
 helpClose?.addEventListener("click", closeHelp);
 helpClose2?.addEventListener("click", closeHelp);
 helpModal?.addEventListener("click", (e) => {
-  if (e.target === helpModal) closeHelp(); // cerrar al click fuera
+  if (e.target === helpModal) closeHelp();
 });
 
 helpCopy?.addEventListener("click", async () => {
@@ -308,12 +351,29 @@ helpCopy?.addEventListener("click", async () => {
     "4) Verifica Estado: active o scheduled.",
     "5) En la pública recarga; si está active y el día aplica, podrán reservar.",
     "6) Al terminar, Cerrar (o deja que pase Fin)."
-  ].join("\\n");
+  ].join("\n");
   try { await navigator.clipboard.writeText(steps); } catch {}
 });
 
-// ===== Start =====
+// ===== Start - Adaptado a Firebase =====
 (async function start() {
-  await processHashSession(); // <-- toma el access_token del hash y crea sesión
+  // Comprobar si hay un enlace de inicio de sesión en la URL al cargar la página
+  // CAMBIO CLAVE: isSignInWithEmailLink es una función, no un método de `auth`
+  if (isSignInWithEmailLink(auth, window.location.href)) {
+    let email = window.localStorage.getItem('emailForSignIn');
+    if (!email) {
+      email = window.prompt('Por favor, proporciona tu correo para confirmar tu inicio de sesión.');
+    }
+    if(email) {
+      try {
+        const result = await signInWithEmailLink(auth, email, window.location.href);
+        window.localStorage.removeItem('emailForSignIn');
+        // El listener onAuthStateChanged se encargará de mostrar la UI correcta
+      } catch (error) {
+        console.error("Error signing in with email link", error);
+      }
+    }
+  }
+  // Iniciar el listener de estado de autenticación
   await checkSession();
 })();

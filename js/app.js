@@ -1,44 +1,61 @@
 // ==========================
-//  Configuración Supabase
+//  Firebase SDK Imports
 // ==========================
-const SUPABASE_URL = "https://sefqzqeztnazpbsolbos.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlZnF6cWV6dG5henBic29sYm9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNDM2MjEsImV4cCI6MjA3MDYxOTYyMX0.9aSakQ3GL3I_H1voXTCN2WdaCMBRDMu5kmLJm3bVa6o";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getFirestore, collection, doc, getDoc, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 // ==========================
-//  Helpers y referencias UI
+//  Firebase Config
+// ==========================
+// Pega aquí tu objeto firebaseConfig de la consola de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCkQisqMEqmKrAbhBPl0xroQQFZFYT0TkY",
+    authDomain: "reserva-sc.firebaseapp.com",
+    projectId: "reserva-sc",
+    storageBucket: "reserva-sc.firebasestorage.app",
+    messagingSenderId: "651352627398",
+    appId: "1:651352627398:web:8120205020de4f6a89dfc7",
+    measurementId: "G-3KZTLF3SBB"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ==========================
+//  Helpers y referencias UI (AHORA SÍ, CORREGIDO AL 100%)
 // ==========================
 const $ = (id) => document.getElementById(id);
 
-const form = $("reservaForm"),
-      formMsg = $("formMsg"),
-      submitBtn = $("submitBtn"),
-      nameInput = $("name"),
-      dateInput = $("date"),
-      personSelect = $("person"),
-      slotSelect = $("slot"),
-      optAM = $("optAM"),
-      optPM = $("optPM"),
-      optSC = $("optSC"),
-      optEsposa = $("optEsposa"),
-      successBox = $("successBox"),
-      errorBox = $("errorBox"),
-      thanksName = $("thanksName"),
-      thanksDate = $("thanksDate"),
-      thanksPerson = $("thanksPerson"),
-      thanksTime = $("thanksTime"),
-      retryBtn = $("retryBtn"),
-      newBtn = $("newBtn"),
-      statusBox = $("statusBox"),
-      statusText = $("statusText"),
-      statusTitle = $("statusTitle");
+const form = $("reservaForm");
+const formMsg = $("formMsg");          // CORREGIDO
+const submitBtn = $("submitBtn");      // CORREGIDO
+const nameInput = $("name");           // CORREGIDO
+const dateInput = $("date");           // CORREGIDO
+const personSelect = $("person");      // CORREGIDO
+const slotSelect = $("slot");          // CORREGIDO
+const optAM = $("optAM");              // CORREGIDO
+const optPM = $("optPM");              // CORREGIDO
+const optSC = $("optSC");              // CORREGIDO
+const optEsposa = $("optEsposa");      // CORREGIDO
+const successBox = $("successBox");    // CORREGIDO
+const errorBox = $("errorBox");        // CORREGIDO
+const thanksName = $("thanksName");    // CORREGIDO
+const thanksDate = $("thanksDate");    // CORREGIDO
+const thanksPerson = $("thanksPerson"); // CORREGIDO
+const thanksTime = $("thanksTime");    // CORREGIDO
+const retryBtn = $("retryBtn");        // CORREGIDO
+const newBtn = $("newBtn");            // CORREGIDO
+const statusBox = $("statusBox");      // CORREGIDO
+const statusText = $("statusText");    // CORREGIDO
+const statusTitle = $("statusTitle");  // CORREGIDO
 
-// Días permitidos dinámicos (se llenan desde Supabase::visit_status)
+// Días permitidos dinámicos (se llenan desde Firestore::settings/visitStatus)
 let AM_ALLOWED = new Set();
 let PM_ALLOWED = new Set();
 
 // ==========================
-//  Mensajería corta
+//  Mensajería corta (Sin cambios)
 // ==========================
 function setFormMsg(text, kind = "") {
   formMsg.textContent = text || "";
@@ -49,34 +66,30 @@ function setFormMsg(text, kind = "") {
 }
 
 // ==========================
-//  PWA: Service Worker
-//  (nota: con js/sw.js el scope es /js/*)
+//  PWA: Service Worker (Sin cambios)
 // ==========================
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js"); // <- en subcarpeta funciona
+  navigator.serviceWorker.register("./sw.js");
 }
-
 
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  // Aquí podrías mostrar un botón "Instalar" y llamar deferredPrompt.prompt();
 });
 
 // ==========================
-//  Estado de visita (abre/cierra formulario)
+//  Estado de visita (abre/cierra formulario) - Adaptado a Firebase
 // ==========================
 async function loadStatusAndConfigure() {
-  // Intenta leer estado desde RPC visit_status (si no existe, cae a formulario tradicional)
   try {
-    const { data, error } = await db.rpc("visit_status");
-    if (error) throw error;
+    // Leemos el documento "visitStatus" de la colección "settings"
+    const statusDocRef = doc(db, "settings", "visitStatus");
+    const statusDocSnap = await getDoc(statusDocRef);
 
-    const s = (data && data[0]) ? data[0] : null;
+    const s = statusDocSnap.exists() ? statusDocSnap.data() : null;
 
     if (!s || s.state !== "active") {
-      // Cualquier estado que NO sea activo ⇒ mostrar mensaje y ocultar form
       form.classList.add("hidden");
       statusBox.classList.remove("hidden");
 
@@ -92,7 +105,7 @@ async function loadStatusAndConfigure() {
       } else if (s.state === "concluded") {
         statusTitle.textContent = "La visita concluyó";
         statusText.textContent = s.message || "Aún no hay fecha de la próxima visita.";
-      } else { // noscheduled
+      } else {
         statusTitle.textContent = "Sin fecha programada";
         statusText.textContent = s.message || "Aún no hay fecha de la próxima visita.";
       }
@@ -103,16 +116,14 @@ async function loadStatusAndConfigure() {
     statusBox.classList.add("hidden");
     form.classList.remove("hidden");
 
-    // Limita el datepicker a la ventana oficial
     if (s.start_date) dateInput.min = s.start_date;
     if (s.end_date)   dateInput.max = s.end_date;
 
-    // Días permitidos para AM/PM
     AM_ALLOWED = new Set((s.am_days || []).map(Number));
     PM_ALLOWED = new Set((s.pm_days || []).map(Number));
 
   } catch (err) {
-    // Si falla el status, por seguridad mostramos solo mensaje
+    console.error("Error loading status:", err);
     form.classList.add("hidden");
     statusBox.classList.remove("hidden");
     statusTitle.textContent = "Estado no disponible";
@@ -121,13 +132,13 @@ async function loadStatusAndConfigure() {
 }
 
 // ==========================
-//  Lógica de slots y disponibilidad
+//  Lógica de slots y disponibilidad - Adaptado a Firebase
 // ==========================
 function updateAllowedSlots() {
   const d = dateInput.value;
   if (!d) return;
 
-  const dow = new Date(d + "T00:00").getDay(); // 0=Dom ... 6=Sáb
+  const dow = new Date(d + "T00:00").getDay();
   const amOk = AM_ALLOWED.has(dow);
   const pmOk = PM_ALLOWED.has(dow);
 
@@ -164,7 +175,6 @@ function updateSubmitState() {
   submitBtn.disabled = !(hasDate && hasSlot && personValid && !bothDisabled);
 }
 
-// Fecha mínima por defecto = hoy (si no hay ventana desde visit_status)
 (function setMinTodayIfEmpty() {
   const t = new Date();
   const yyyy = t.getFullYear();
@@ -186,32 +196,37 @@ async function checkAvailability() {
 
   if (!slotSelect.value) { updateSubmitState(); return; }
 
-  const { data, error } = await db.rpc("taken_persons_by_slot", {
-    p_date: d,
-    p_slot: slotSelect.value
-  });
+  // Reemplazamos la llamada RPC con una query a la colección 'reservas'
+  const q = query(collection(db, "reservas"),
+    where("date", "==", d),
+    where("slot", "==", slotSelect.value)
+  );
 
-  if (error) {
+  try {
+    const querySnapshot = await getDocs(q);
+    const taken = new Set();
+    querySnapshot.forEach((doc) => {
+      taken.add(doc.data().person);
+    });
+
+    if (taken.has("SC")) {
+      optSC.disabled = true;
+      optSC.textContent = "Superintendente de Circuito — Ocupado";
+    }
+    if (taken.has("Esposa")) {
+      optEsposa.disabled = true;
+      optEsposa.textContent = "Esposa del SC — Ocupado";
+    }
+  } catch (error) {
     setFormMsg("No se pudo verificar disponibilidad.", "error");
-    updateSubmitState();
-    return;
-  }
-
-  const taken = new Set((data || []).map(r => r.person));
-  if (taken.has("SC")) {
-    optSC.disabled = true;
-    optSC.textContent = "Superintendente de Circuito — Ocupado";
-  }
-  if (taken.has("Esposa")) {
-    optEsposa.disabled = true;
-    optEsposa.textContent = "Esposa del SC — Ocupado";
+    console.error(error);
   }
 
   updateSubmitState();
 }
 
 // ==========================
-//  Listeners
+//  Listeners (Sin cambios)
 // ==========================
 dateInput?.addEventListener("change", () => { updateAllowedSlots(); checkAvailability(); });
 slotSelect?.addEventListener("change", () => { checkAvailability(); });
@@ -235,19 +250,9 @@ form?.addEventListener("submit", async (e) => {
     slot: slotSelect.value || "AM"
   };
 
-  const { error } = await db.from("reservas").insert(payload);
-
-  if (error) {
-    if (error.code === "23505") {
-      form.classList.add("hidden");
-      errorBox.classList.remove("hidden");
-      personSelect.value = "";
-      await checkAvailability();
-    } else {
-      setFormMsg("Error al guardar. Intenta de nuevo.", "error");
-      console.error(error);
-    }
-  } else {
+  try {
+    await addDoc(collection(db, "reservas"), payload);
+    // Éxito
     const nombreCorto = payload.name.split(" ")[0] || payload.name;
     thanksName.textContent = nombreCorto;
     const [y, m, d] = payload.date.split("-");
@@ -260,6 +265,14 @@ form?.addEventListener("submit", async (e) => {
 
     const doneAnim = document.getElementById("doneAnim");
     if (doneAnim && doneAnim.play) { try { doneAnim.stop(); doneAnim.play(); } catch (_) {} }
+  } catch (error) {
+    // Firestore no tiene un error de "duplicado" como Supabase (23505).
+    // Cualquier error al escribir se considera un fallo.
+    console.error("Error al guardar:", error);
+    form.classList.add("hidden");
+    errorBox.classList.remove("hidden");
+    personSelect.value = "";
+    await checkAvailability();
   }
 
   submitBtn.disabled = false; submitBtn.textContent = "Reservar cupo";
@@ -288,11 +301,8 @@ newBtn?.addEventListener("click", (e) => {
 //  Arranque
 // ==========================
 (async function init() {
-  // Carga estado de visita y configura límites
   await loadStatusAndConfigure();
-  // Si está activo, prepara disponibilidad inicial
   if (!form.classList.contains("hidden")) {
-    // Si el usuario ya trae un valor por autocompletado, refrescar
     if (dateInput.value) updateAllowedSlots();
     checkAvailability();
   }

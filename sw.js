@@ -1,14 +1,8 @@
-const CACHE = "reserva-sc-v6";
+const CACHE = "reserva-sc-v7";
 const ASSETS = [
   "./",
   "./index.html",
-  "./manifest.webmanifest",
-  "./css/style.css",
-  "./img/icon-192.png",
-  "./img/icon-512.png",
-  "./img/ups.gif",
-  "./assets/Done.json",
-  "./js/app.js"
+  "./admin.html"
 ];
 
 
@@ -37,12 +31,7 @@ self.addEventListener("fetch", (e) => {
   // Solo GET y http(s)
   if (req.method !== "GET") return;
   if (!/^https?:/.test(req.url)) return;
-
-  // No cachear llamadas a Supabase (REST/RPC) ni otras APIs
-  const u = new URL(req.url);
-  if (u.hostname.endsWith("supabase.co")) return;
-
-  // Stale-while-revalidate para estáticos
+// Stale-while-revalidate para estáticos
   e.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req).then((netRes) => {
@@ -57,4 +46,5 @@ self.addEventListener("fetch", (e) => {
     })
   );
 });
+
 
