@@ -5,156 +5,169 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin · Reserva SC</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" crossorigin src="/reserva-sc/assets/admin-C0qtM4S0.js"></script>
-  <link rel="modulepreload" crossorigin href="/reserva-sc/assets/style-DVQik4Xl.js">
-  <link rel="stylesheet" crossorigin href="/reserva-sc/assets/style-CJQhVO6W.css">
+  <script type="module" crossorigin src="/reserva-sc/assets/admin-Dx7ldWxA.js"></script>
+  <link rel="modulepreload" crossorigin href="/reserva-sc/assets/style-Dz1zmf2x.js">
+  <link rel="stylesheet" crossorigin href="/reserva-sc/assets/style-ZauOz8va.css">
 </head>
-<body class="min-h-screen bg-gray-100">
-  <div class="max-w-3xl mx-auto p-4">
-    <h1 class="text-2xl font-semibold mb-2">Panel Admin · Reserva SC</h1>
-    <p class="text-sm text-zinc-600 mb-6">Abre, programa, cierra y ajusta rango/días sin usar SQL.</p>
+<body class="admin-body">
+  <div class="admin-shell">
+    <header class="admin-hero">
+      <div>
+        <p class="admin-eyebrow">Panel</p>
+        <h1>Reserva SC · Admin</h1>
+        <p class="admin-sub">Abre, programa y ajusta la visita con un flujo claro y sin tocar SQL.</p>
+      </div>
+      <div class="admin-hero-actions">
+        <a class="ghost-link" href="./">Ver pagina publica</a>
+      </div>
+    </header>
 
     <!-- LOGIN -->
-    <section id="loginBox" class="glass p-4 rounded-xl mb-4">
-      <h2 class="font-medium mb-2">Acceso</h2>
-      <p class="text-sm text-zinc-600 mb-3">Ingresa tu correo y te llegará un enlace para entrar.</p>
-      <div class="flex gap-2 items-end">
-        <div class="flex-1">
-          <label for="email" class="text-sm">Correo</label>
-          <input id="email" type="email" class="w-full border rounded-lg p-2" placeholder="tu-correo@dominio.com"/>
+    <section id="loginBox" class="card admin-card">
+      <h2 class="card-title">Acceso seguro</h2>
+      <p class="card-sub">Ingresa tu correo y recibirás un enlace para entrar.</p>
+      <div class="admin-row">
+        <div class="field">
+          <label for="email" class="field-label">Correo</label>
+          <input id="email" type="email" class="field-input" placeholder="tu-correo@dominio.com"/>
         </div>
-        <button id="sendLinkBtn" class="btn btn-primary">Enviar enlace</button>
+        <button id="sendLinkBtn" class="admin-btn primary">Enviar enlace</button>
       </div>
-      <p id="loginMsg" class="text-sm mt-2 text-zinc-600"></p>
+      <p id="loginMsg" class="admin-note"></p>
     </section>
 
-<section id="appBox" class="glass p-4 rounded-xl hidden">
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="font-medium">Control de la visita</h2>
-    <div class="flex gap-2">
-      <button id="helpBtn" class="btn btn-outline">¿Cómo publicar?</button>
-      <button id="logoutBtn" class="btn btn-outline">Salir</button>
-    </div>
-  </div>
-
-
-      <!-- Estado -->
-      <div class="mb-4">
-        <div class="text-sm">
-          <span class="font-medium">Estado:</span>
-          <span id="stateBadge" class="px-2 py-0.5 rounded-lg text-white text-xs"></span>
-        </div>
-        <p id="stateDesc" class="text-sm text-zinc-600 mt-1"></p>
-      </div>
-
-      <!-- Form ventana -->
-      <div class="grid sm:grid-cols-2 gap-4">
+    <section id="appBox" class="hidden">
+      <div class="admin-toolbar">
         <div>
-          <label class="text-sm">Título</label>
-          <input id="title" class="w-full border rounded-lg p-2" placeholder="Visita SC ..."/>
+          <h2 class="section-title">Control de la visita</h2>
+          <p class="section-sub">Actualiza el estado, define el rango y publica con un clic.</p>
         </div>
-        <div>
-          <label class="text-sm">Abrir (open_at)</label>
-          <input id="openAt" type="datetime-local" class="w-full border rounded-lg p-2"/>
-        </div>
-        <div>
-          <label class="text-sm">Inicio (start_date)</label>
-          <input id="startDate" type="date" class="w-full border rounded-lg p-2"/>
-        </div>
-        <div>
-          <label class="text-sm">Fin (end_date)</label>
-          <input id="endDate" type="date" class="w-full border rounded-lg p-2"/>
+        <div class="admin-toolbar-actions">
+          <button id="helpBtn" class="admin-btn outline">Guia rapida</button>
+          <button id="logoutBtn" class="admin-btn outline">Salir</button>
         </div>
       </div>
 
-      <!-- Días -->
-      <div class="mt-4 grid sm:grid-cols-2 gap-4">
-        <div>
-          <div class="font-medium text-sm mb-1">AM permitido</div>
-          <div id="amDays" class="grid grid-cols-7 gap-2 text-xs"></div>
-        </div>
-        <div>
-          <div class="font-medium text-sm mb-1">PM permitido</div>
-          <div id="pmDays" class="grid grid-cols-7 gap-2 text-xs"></div>
-        </div>
+      <div class="admin-grid">
+        <!-- Estado -->
+        <section class="card">
+          <div class="card-head">
+            <h3 class="card-title">Estado actual</h3>
+            <span id="stateBadge" class="px-2 py-0.5 rounded-lg text-white text-xs"></span>
+          </div>
+          <p id="stateDesc" class="card-sub"></p>
+        </section>
+
+        <!-- Form ventana -->
+        <section class="card">
+          <h3 class="card-title">Ventana y titulo</h3>
+          <p class="card-sub">Define el periodo visible y el nombre de la visita.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label">Titulo</label>
+              <input id="title" class="field-input" placeholder="Visita SC ..." />
+            </div>
+            <div class="field">
+              <label class="field-label">Abrir (open_at)</label>
+              <input id="openAt" type="datetime-local" class="field-input" />
+            </div>
+            <div class="field">
+              <label class="field-label">Inicio (start_date)</label>
+              <input id="startDate" type="date" class="field-input" />
+            </div>
+            <div class="field">
+              <label class="field-label">Fin (end_date)</label>
+              <input id="endDate" type="date" class="field-input" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Días -->
+        <section class="card">
+          <h3 class="card-title">Dias permitidos</h3>
+          <p class="card-sub">Marca los dias habilitados para AM y PM.</p>
+          <div class="days-grid">
+            <div>
+              <div class="field-label">AM permitido</div>
+              <div id="amDays" class="grid grid-cols-7 gap-2 text-xs"></div>
+            </div>
+            <div>
+              <div class="field-label">PM permitido</div>
+              <div id="pmDays" class="grid grid-cols-7 gap-2 text-xs"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Botones -->
+        <section class="card">
+          <h3 class="card-title">Acciones rapidas</h3>
+          <p class="card-sub">Abre ahora o programa una apertura.</p>
+          <div class="action-grid">
+            <button id="openNowBtn" class="admin-btn success">Abrir ahora</button>
+            <button id="scheduleBtn" class="admin-btn warn">Programar apertura</button>
+            <button id="saveWindowBtn" class="admin-btn primary">Guardar rango/dias</button>
+            <button id="closeBtn" class="admin-btn danger">Cerrar visita</button>
+            <button id="newVisitBtn" class="admin-btn light">Crear nueva visita</button>
+          </div>
+        </section>
+
+        <section class="card admin-table span-2">
+          <div class="card-head">
+            <div>
+              <h3 class="card-title">Ultimas visitas</h3>
+              <p class="card-sub">Historial rapido para editar la mas reciente.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Titulo</th>
+                  <th>Inicio</th>
+                  <th>Fin</th>
+                  <th>is_open</th>
+                  <th>open_at</th>
+                  <th>Accion</th>
+                </tr>
+              </thead>
+              <tbody id="visitsTbody"></tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
-     <!-- Botones (mejor marcados) -->
-<div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-  <button id="openNowBtn"
-    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 shadow-sm">
-    🔓 Abrir ahora
-  </button>
-
-  <button id="scheduleBtn"
-    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm">
-    🕒 Programar apertura
-  </button>
-
-  <button id="saveWindowBtn"
-    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm">
-    💾 Guardar rango/días
-  </button>
-
-  <button id="closeBtn"
-    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 shadow-sm">
-    🚫 Cerrar
-  </button>
-
-  <button id="newVisitBtn"
-    class="inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium text-zinc-900 bg-zinc-200 hover:bg-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 shadow-sm">
-    ➕ Crear nueva visita
-  </button>
-</div>
-
-
-      <p id="appMsg" class="text-sm mt-3 text-zinc-600"></p>
-
-      <!-- Log visitas -->
-      <div class="mt-6">
-        <h3 class="font-medium mb-2">Últimas visitas</h3>
-        <table class="w-full text-sm border">
-          <thead class="bg-zinc-100">
-            <tr>
-              <th class="p-2 border">ID</th>
-              <th class="p-2 border">Título</th>
-              <th class="p-2 border">Inicio</th>
-              <th class="p-2 border">Fin</th>
-              <th class="p-2 border">is_open</th>
-              <th class="p-2 border">open_at</th>
-              <th class="p-2 border">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="visitsTbody"></tbody>
-        </table>
-      </div>
-      <!-- Modal de ayuda -->
-<div id="helpModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50">
-  <div class="mx-auto mt-16 max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-lg font-semibold">Cómo crear y publicar una visita</h3>
-      <button id="helpClose" class="px-3 py-1 rounded-lg border hover:bg-zinc-50">Cerrar</button>
-    </div>
-
-    <ol class="list-decimal pl-5 space-y-2 text-sm text-zinc-700">
-      <li><b>Crear nueva visita</b> → genera una fila <i>cerrada</i>.</li>
-      <li><b>Configura</b> Título, <b>Inicio</b>/<b>Fin</b> y días <b>AM/PM</b> permitidos. Pulsa <b>Guardar rango/días</b>.</li>
-      <li>Para abrir <b>ahora</b>: pulsa <b>Abrir ahora</b>.</li>
-      <li>Para <b>programar</b>: elige fecha/hora en <b>Abrir (open_at)</b> y pulsa <b>Programar apertura</b>.</li>
-      <li>El <b>Estado</b> debe quedar <b>active</b> (visible) o <b>scheduled</b> (programada).</li>
-      <li>En https://charlyriot.github.io/reserva-sc/. Si está <b>active</b> y el día cae en tu ventana/días, ya pueden reservar.</li>
-      <li>Para terminar, pulsa <b>Cerrar</b> (o espera a que pase <b>Fin</b>).</li>
-    </ol>
-
-    <div class="mt-4 flex gap-2">
-      <button id="helpCopy" class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Copiar pasos</button>
-      <button id="helpClose2" class="px-3 py-2 rounded-lg border hover:bg-zinc-50">Listo</button>
-    </div>
-  </div>
-</div>
-
+      <p id="appMsg" class="admin-note"></p>
     </section>
+
+    <!-- Modal de ayuda -->
+    <div id="helpModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50">
+      <div class="mx-auto mt-16 max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">Como crear y publicar una visita</h3>
+          <button id="helpClose" class="px-3 py-1 rounded-lg border hover:bg-zinc-50">Cerrar</button>
+        </div>
+
+        <ol class="list-decimal pl-5 space-y-2 text-sm text-zinc-700">
+          <li><b>Crear nueva visita</b> → genera una fila cerrada.</li>
+          <li><b>Configura</b> titulo, <b>inicio</b>/<b>fin</b> y dias AM/PM. Pulsa <b>Guardar rango/dias</b>.</li>
+          <li>Para abrir ahora: pulsa <b>Abrir ahora</b>.</li>
+          <li>Para programar: elige fecha/hora en <b>Abrir (open_at)</b> y pulsa <b>Programar apertura</b>.</li>
+          <li>El estado debe quedar <b>active</b> o <b>scheduled</b>.</li>
+          <li>En https://charlyriot.github.io/reserva-sc/ ya pueden reservar si esta active.</li>
+          <li>Para terminar, pulsa <b>Cerrar</b> (o espera a que pase fin).</li>
+        </ol>
+
+        <div class="mt-4 flex gap-2">
+          <button id="helpCopy" class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Copiar pasos</button>
+          <button id="helpClose2" class="px-3 py-2 rounded-lg border hover:bg-zinc-50">Listo</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </body>
