@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" crossorigin src="/reserva-sc/assets/admin-BAcUN2QP.js"></script>
+  <script type="module" crossorigin src="/reserva-sc/assets/admin-CggI4VCf.js"></script>
   <link rel="modulepreload" crossorigin href="/reserva-sc/assets/style-Dz1zmf2x.js">
   <link rel="stylesheet" crossorigin href="/reserva-sc/assets/style-ZauOz8va.css">
 </head>
@@ -112,6 +112,59 @@
             <button id="saveWindowBtn" class="admin-btn primary">Guardar rango/dias</button>
             <button id="closeBtn" class="admin-btn danger">Cerrar visita</button>
           </div>
+        </section>
+
+        <section class="card span-2">
+          <div class="card-head">
+            <div>
+              <h3 class="card-title">Reservas</h3>
+              <p class="card-sub">Edita o elimina reservas existentes.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Turno</th>
+                  <th>Persona</th>
+                  <th>Nombre</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="reservasTbody"></tbody>
+            </table>
+          </div>
+
+          <div class="form-grid" style="margin-top:16px;">
+            <div class="field">
+              <label class="field-label">Nombre</label>
+              <input id="resName" class="field-input" placeholder="Nombre completo" />
+            </div>
+            <div class="field">
+              <label class="field-label">Fecha</label>
+              <input id="resDate" type="date" class="field-input" />
+            </div>
+            <div class="field">
+              <label class="field-label">Turno</label>
+              <select id="resSlot" class="field-input">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">Persona</label>
+              <select id="resPerson" class="field-input">
+                <option value="SC">SC</option>
+                <option value="Esposa">Esposa</option>
+              </select>
+            </div>
+          </div>
+          <div class="action-grid" style="margin-top:12px;">
+            <button id="resUpdateBtn" class="admin-btn primary">Guardar cambios</button>
+            <button id="resClearBtn" class="admin-btn light">Limpiar seleccion</button>
+          </div>
+          <p id="resMsg" class="admin-note"></p>
         </section>
       </div>
 
