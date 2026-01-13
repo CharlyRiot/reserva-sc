@@ -68,19 +68,19 @@
           <p class="card-sub">Define el periodo visible y el nombre de la visita.</p>
           <div class="form-grid">
             <div class="field">
-              <label class="field-label">Titulo</label>
+              <label class="field-label" title="Nombre visible de la visita en la pagina publica.">Titulo</label>
               <input id="title" class="field-input" placeholder="Visita SC ..." />
             </div>
             <div class="field">
-              <label class="field-label">Abrir (open_at)</label>
+              <label class="field-label" title="Fecha/hora en que el formulario se publica. Si la dejas vacia, usa 'Abrir ahora'.">Abrir (open_at)</label>
               <input id="openAt" type="datetime-local" class="field-input" />
             </div>
             <div class="field">
-              <label class="field-label">Inicio (start_date)</label>
+              <label class="field-label" title="Primer dia permitido para reservar. Limita el calendario.">Inicio (start_date)</label>
               <input id="startDate" type="date" class="field-input" />
             </div>
             <div class="field">
-              <label class="field-label">Fin (end_date)</label>
+              <label class="field-label" title="Ultimo dia permitido para reservar.">Fin (end_date)</label>
               <input id="endDate" type="date" class="field-input" />
             </div>
           </div>
@@ -92,11 +92,11 @@
           <p class="card-sub">Marca los dias habilitados para AM y PM.</p>
           <div class="days-grid">
             <div>
-              <div class="field-label">AM permitido</div>
+              <div class="field-label" title="Dias habilitados para turno AM.">AM permitido</div>
               <div id="amDays" class="grid grid-cols-7 gap-2 text-xs"></div>
             </div>
             <div>
-              <div class="field-label">PM permitido</div>
+              <div class="field-label" title="Dias habilitados para turno PM.">PM permitido</div>
               <div id="pmDays" class="grid grid-cols-7 gap-2 text-xs"></div>
             </div>
           </div>
