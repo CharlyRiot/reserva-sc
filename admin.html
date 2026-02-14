@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" crossorigin src="/reserva-sc/assets/admin-Bbx0_fGl.js"></script>
+  <script type="module" crossorigin src="/reserva-sc/assets/admin-CjJ8xydu.js"></script>
   <link rel="modulepreload" crossorigin href="/reserva-sc/assets/style-Dz1zmf2x.js">
   <link rel="stylesheet" crossorigin href="/reserva-sc/assets/style-ZauOz8va.css">
 </head>
@@ -29,13 +29,21 @@
     <!-- LOGIN -->
     <section id="loginBox" class="card admin-card">
       <h2 class="card-title">Acceso seguro</h2>
-      <p class="card-sub">Ingresa tu correo y recibirás un enlace para entrar.</p>
+      <p class="card-sub">Ingresa tu correo y contraseña para entrar al panel.</p>
       <div class="admin-row">
         <div class="field">
           <label for="email" class="field-label">Correo</label>
           <input id="email" type="email" class="field-input" placeholder="tu-correo@dominio.com"/>
         </div>
-        <button id="sendLinkBtn" class="admin-btn primary">Enviar enlace</button>
+        <div class="field">
+          <label for="password" class="field-label">Contraseña</label>
+          <input id="password" type="password" class="field-input" placeholder="Tu contraseña"/>
+          <label class="field-label" style="margin-top:8px; display:flex; align-items:center; gap:8px; font-weight:500;">
+            <input id="showPassword" type="checkbox" />
+            Mostrar contraseña
+          </label>
+        </div>
+        <button id="loginBtn" class="admin-btn primary">Entrar</button>
       </div>
       <p id="loginMsg" class="admin-note"></p>
     </section>
@@ -60,20 +68,34 @@
             <span id="stateBadge" class="px-2 py-0.5 rounded-lg text-white text-xs"></span>
           </div>
           <p id="stateDesc" class="card-sub"></p>
+          <p class="field-label" style="margin-top:12px;">Resumen guardado</p>
+          <pre id="stateSummary" class="admin-note" style="white-space:pre-wrap; margin-top:8px;"></pre>
         </section>
 
         <!-- Form ventana -->
         <section class="card">
           <h3 class="card-title">Ventana de reservas</h3>
-          <p class="card-sub">Elige el titulo y las fechas permitidas para reservar.</p>
-          <div class="form-grid">
+          <p class="card-sub">Separa la vigencia de reservas del periodo real de la visita.</p>
+          <div style="border:1px solid #bfdbfe; border-radius:12px; padding:12px; background:#eff6ff; margin-bottom:14px;">
+            <p class="field-label" style="margin-bottom:8px;">Periodo de visita (base)</p>
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" title="Primer dia real en que estara el SC de visita.">Inicio de visita</label>
+                <input id="visitStartDate" type="date" class="field-input" />
+              </div>
+              <div class="field">
+                <label class="field-label" title="Ultimo dia real de la visita.">Fin de visita</label>
+                <input id="visitEndDate" type="date" class="field-input" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid" style="border-top:1px solid #e4e4e7; padding-top:14px;">
             <div class="field">
               <label class="field-label" title="Nombre visible de la visita en la pagina publica.">Titulo</label>
               <input id="title" class="field-input" placeholder="Visita SC ..." />
-            </div>
-            <div class="field">
-              <label class="field-label" title="Fecha/hora en que el formulario se publica. Si la dejas vacia, usa 'Abrir ahora'.">Publicar en (opcional)</label>
-              <input id="openAt" type="datetime-local" class="field-input" />
+              <button id="saveTitleBtn" type="button" class="admin-btn light" style="margin-top:8px;">Actualizar nombre</button>
+              <p id="titleMsg" class="admin-note" style="margin-top:8px;"></p>
             </div>
             <div class="field">
               <label class="field-label" title="Primer dia permitido para reservar. Limita el calendario.">Inicio de reservas</label>
@@ -83,6 +105,9 @@
               <label class="field-label" title="Ultimo dia permitido para reservar.">Fin de reservas</label>
               <input id="endDate" type="date" class="field-input" />
             </div>
+          </div>
+          <div style="margin-top:12px;">
+            <button id="saveWindowBtn" class="admin-btn primary">Guardar rango/dias</button>
           </div>
         </section>
 
@@ -105,11 +130,16 @@
         <!-- Botones -->
         <section class="card">
           <h3 class="card-title">Publicacion</h3>
-          <p class="card-sub">Guarda cambios y controla el estado de la visita.</p>
+          <p class="card-sub">Define cuando abrir y controla el estado de la visita.</p>
+          <div style="border:1px solid #fde68a; border-radius:12px; padding:12px; background:#fffbeb; margin-bottom:12px;">
+            <label class="field-label" title="Fecha/hora en que el formulario se publica. Si la dejas vacia, usa 'Abrir ahora'.">Publicar en (opcional)</label>
+            <div style="margin-top:8px;">
+              <input id="openAt" type="datetime-local" class="field-input" style="width:100%;" />
+              <button id="scheduleBtn" class="admin-btn warn" style="margin-top:10px;">Programar apertura</button>
+            </div>
+          </div>
           <div class="action-grid">
             <button id="openNowBtn" class="admin-btn success">Abrir ahora</button>
-            <button id="scheduleBtn" class="admin-btn warn">Programar apertura</button>
-            <button id="saveWindowBtn" class="admin-btn primary">Guardar rango/dias</button>
             <button id="closeBtn" class="admin-btn danger">Cerrar visita</button>
           </div>
         </section>
@@ -172,6 +202,18 @@
       <p id="appMsg" class="admin-note"></p>
     </section>
 
+    <!-- Modal de confirmacion -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50">
+      <div class="mx-auto mt-24 max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+        <h3 class="text-lg font-semibold">Confirmar accion</h3>
+        <p id="confirmText" class="text-sm text-zinc-700 mt-2"></p>
+        <div class="mt-4 flex gap-2">
+          <button id="confirmYesBtn" class="admin-btn primary">Si</button>
+          <button id="confirmNoBtn" class="admin-btn outline">Corregir</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal de ayuda -->
     <div id="helpModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50">
       <div class="mx-auto mt-16 max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
@@ -181,11 +223,13 @@
         </div>
 
         <ol class="list-decimal pl-5 space-y-2 text-sm text-zinc-700">
-          <li><b>Define la ventana</b>: titulo, inicio/fin y dias AM/PM. Pulsa <b>Guardar rango/dias</b>.</li>
-          <li><b>Publica ahora</b>: pulsa <b>Abrir ahora</b> y la pagina publica se habilita al instante.</li>
-          <li><b>Publica despues</b>: elige fecha/hora en <b>Publicar en</b> y pulsa <b>Programar apertura</b>.</li>
-          <li>Mientras este <b>scheduled</b>, el formulario no se muestra. Al llegar la hora se activa solo.</li>
-          <li>Si necesitas cerrar todo, pulsa <b>Cerrar visita</b>.</li>
+          <li><b>Periodo base</b>: define <b>Inicio de visita</b> y <b>Fin de visita</b>.</li>
+          <li><b>Ventana de reservas</b>: ajusta titulo, inicio/fin de reservas y dias AM/PM. Pulsa <b>Guardar rango/dias</b>.</li>
+          <li><b>Solo nombre</b>: si cambia el visitante, edita el titulo y pulsa <b>Actualizar nombre</b>.</li>
+          <li><b>Publicar ahora</b>: pulsa <b>Abrir ahora</b> para habilitar reservas en ese momento.</li>
+          <li><b>Publicar despues</b>: define fecha/hora en <b>Publicar en</b> y pulsa <b>Programar apertura</b>.</li>
+          <li>Mientras el estado este <b>Programada</b>, no se muestra el formulario. Al llegar la hora se habilita solo.</li>
+          <li>Para detener reservas, pulsa <b>Cerrar visita</b>.</li>
         </ol>
 
         <div class="mt-4 flex gap-2">
@@ -198,4 +242,8 @@
 
 </body>
 </html>
+
+
+
+
 
