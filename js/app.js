@@ -2,7 +2,7 @@
 //  Firebase SDK Imports
 // ==========================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 // ==========================
 //  Firebase Config
@@ -49,10 +49,18 @@ const newBtn = $("newBtn");            // CORREGIDO
 const statusBox = $("statusBox");      // CORREGIDO
 const statusText = $("statusText");    // CORREGIDO
 const statusTitle = $("statusTitle");  // CORREGIDO
+const reservasList = $("reservasList");
+const reservasEmpty = $("reservasEmpty");
 
 // Días permitidos dinámicos (se llenan desde Firestore::settings/visitStatus)
 let AM_ALLOWED = new Set();
 let PM_ALLOWED = new Set();
+
+function getEffectiveVisitRange(status) {
+  const visitStart = status?.visit_start_date || status?.start_date || "";
+  const visitEnd = status?.visit_end_date || status?.end_date || "";
+  return { visitStart, visitEnd };
+}
 
 // ==========================
 //  Mensajería corta (Sin cambios)
@@ -88,8 +96,17 @@ async function loadStatusAndConfigure() {
     const statusDocSnap = await getDoc(statusDocRef);
 
     const s = statusDocSnap.exists() ? statusDocSnap.data() : null;
+    const openAt = s?.open_at?.toDate
+      ? s.open_at.toDate()
+      : s?.open_at?.seconds
+        ? new Date(s.open_at.seconds * 1000)
+        : null;
+    const isActive = s && (
+      s.state === "active" ||
+      (s.state === "scheduled" && openAt && openAt <= new Date())
+    );
 
-    if (!s || s.state !== "active") {
+    if (!s || !isActive) {
       form.classList.add("hidden");
       statusBox.classList.remove("hidden");
 
@@ -101,7 +118,11 @@ async function loadStatusAndConfigure() {
 
       if (s.state === "scheduled") {
         statusTitle.textContent = "Reservas aún no abiertas";
-        statusText.textContent = s.message || "Vuelve pronto.";
+        if (openAt) {
+          statusText.textContent = `Las reservas abren el ${openAt.toLocaleString()}.`;
+        } else {
+          statusText.textContent = s.message || "Vuelve pronto.";
+        }
       } else if (s.state === "concluded") {
         statusTitle.textContent = "La visita concluyó";
         statusText.textContent = s.message || "Aún no hay fecha de la próxima visita.";
@@ -116,8 +137,9 @@ async function loadStatusAndConfigure() {
     statusBox.classList.add("hidden");
     form.classList.remove("hidden");
 
-    if (s.start_date) dateInput.min = s.start_date;
-    if (s.end_date)   dateInput.max = s.end_date;
+    const { visitStart, visitEnd } = getEffectiveVisitRange(s);
+    if (visitStart) dateInput.min = visitStart;
+    if (visitEnd)   dateInput.max = visitEnd;
 
     AM_ALLOWED = new Set((s.am_days || []).map(Number));
     PM_ALLOWED = new Set((s.pm_days || []).map(Number));
@@ -139,6 +161,16 @@ function updateAllowedSlots() {
   if (!d) return;
 
   const dow = new Date(d + "T00:00").getDay();
+  if (dow === 2) {
+    optAM.disabled = true;
+    optPM.disabled = true;
+    optAM.textContent = "Mañana — No disponible";
+    optPM.textContent = "Tarde — No disponible";
+    slotSelect.value = "";
+    setFormMsg("Los martes no hay servicio.", "warn");
+    updateSubmitState();
+    return;
+  }
   const amOk = AM_ALLOWED.has(dow);
   const pmOk = PM_ALLOWED.has(dow);
 
@@ -195,6 +227,7 @@ async function checkAvailability() {
   });
 
   if (!slotSelect.value) { updateSubmitState(); return; }
+  if (new Date(d + "T00:00").getDay() === 2) { updateSubmitState(); return; }
 
   // Reemplazamos la llamada RPC con una query a la colección 'reservas'
   const q = query(collection(db, "reservas"),
@@ -223,6 +256,58 @@ async function checkAvailability() {
   }
 
   updateSubmitState();
+}
+
+function formatPerson(person) {
+  return person === "SC" ? "SC" : "Esposa";
+}
+
+function formatName(name) {
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "—";
+  const first = parts[0];
+  const second = parts[1] || "";
+  const initial = second ? `${second[0].toUpperCase()}.` : "";
+  return `${first}${initial ? " " + initial : ""}`;
+}
+
+function dayNameFromDate(dateStr) {
+  const names = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+  const dow = new Date(dateStr + "T00:00").getDay();
+  return names[dow] || "";
+}
+
+async function loadReservasList() {
+  if (!reservasList || !reservasEmpty) return;
+  reservasList.innerHTML = "";
+  reservasEmpty.classList.remove("hidden");
+  try {
+    const q = query(collection(db, "reservas"), orderBy("date", "asc"));
+    const querySnapshot = await getDocs(q);
+    const rows = [];
+    querySnapshot.forEach((doc) => {
+      const r = doc.data();
+      rows.push(r);
+    });
+    rows.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      const slotOrder = { AM: 0, PM: 1 };
+      return (slotOrder[a.slot] ?? 9) - (slotOrder[b.slot] ?? 9);
+    });
+    if (!rows.length) return;
+    reservasEmpty.classList.add("hidden");
+    rows.forEach((r) => {
+      const li = document.createElement("li");
+      const dayName = dayNameFromDate(r.date);
+      const slotLabel = r.slot || "AM";
+      const person = formatPerson(r.person);
+      const who = formatName(r.name);
+      li.textContent = `${dayName} ${slotLabel} Reservado por ${who} Con ${person}`;
+      reservasList.appendChild(li);
+    });
+  } catch (error) {
+    console.error("Error loading reservas:", error);
+  }
 }
 
 // ==========================
@@ -306,4 +391,5 @@ newBtn?.addEventListener("click", (e) => {
     if (dateInput.value) updateAllowedSlots();
     checkAvailability();
   }
+  await loadReservasList();
 })();
